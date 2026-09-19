@@ -1,4 +1,5 @@
 import pytest
+from fastapi.testclient import TestClient
 
 from app.database import get_connection, init_db
 
@@ -29,3 +30,13 @@ def make_user(db):
         )
 
     return _make
+
+
+@pytest.fixture
+def client(db_path, monkeypatch):
+    monkeypatch.setenv("HOMEWORK_DB_PATH", str(db_path))
+    monkeypatch.setenv("SESSION_SECRET_KEY", "test-secret")
+    from app.main import create_app
+
+    app = create_app()
+    return TestClient(app, follow_redirects=False)

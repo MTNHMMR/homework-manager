@@ -1,0 +1,14 @@
+body { font-family: system-ui, sans-serif; margin: 0; background: #f7f7f9; color: #1a1a1a; }
+nav { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1.5rem; background: #22314a; color: white; }
+nav a, nav .who { color: white; text-decoration: none; }
+nav .brand { font-weight: bold; margin-right: auto; }
+nav form.inline { display: inline; margin: 0; }
+nav button { background: none; border: 1px solid white; color: white; padding: 0.25rem 0.6rem; border-radius: 4px; cursor: pointer; }
+main { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+th, td { text-align: left; padding: 0.5rem; border-bottom: 1px solid #ddd; }
+form.stack label { display: block; margin-bottom: 0.5rem; }
+.error { color: #b00020; }
+.status-done { color: #1a7f37; font-weight: bold; }
+.status-in_progress { color: #9a6700; }
+.status-not_started { color: #57606a; }

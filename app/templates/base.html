@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Homework Manager{% endblock %}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <nav>
+        <a class="brand" href="/">Homework Manager</a>
+        {% if user %}
+            <span class="who">{{ user.display_name }}</span>
+            {% if user.is_admin %}
+                <a href="/admin">All assignments</a>
+                <a href="/admin/users">Manage users</a>
+            {% else %}
+                <a href="/overview">My assignments</a>
+            {% endif %}
+            <form method="post" action="/logout" class="inline">
+                <button type="submit">Log out</button>
+            </form>
+        {% endif %}
+    </nav>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>
