@@ -1,3 +1,86 @@
-from fastapi import APIRouter
+import sqlite3
+
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
+
+from app.assignments import (
+    VALID_STATUSES,
+    Assignment,
+    create_assignment,
+    delete_assignment,
+    get_assignment_by_id,
+    list_assignments_for_user,
+    update_assignment,
+)
+from app.deps import get_db, require_user
+from app.users import User
 
 router = APIRouter()
+templates = Jinja2Templates(directory="app/templates")
+
+
+@router.get("/overview", response_class=HTMLResponse)
+def overview(
+    request: Request,
+    user: User = Depends(require_user),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    assignments = list_assignments_for_user(db, user.id)
+    return templates.TemplateResponse(
+        "overview.html",
+        {
+            "request": request,
+            "user": user,
+            "assignments": assignments,
+            "statuses": VALID_STATUSES,
+        },
+    )
+
+
+@router.post("/overview/add")
+def add_assignment(
+    subject: str = Form(...),
+    title: str = Form(...),
+    due_date: str = Form(...),
+    user: User = Depends(require_user),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    create_assignment(db, user.id, subject, title, due_date)
+    return RedirectResponse("/overview", status_code=303)
+
+
+def _own_assignment_or_403(
+    db: sqlite3.Connection, assignment_id: int, user: User
+) -> Assignment:
+    assignment = get_assignment_by_id(db, assignment_id)
+    if assignment is None or assignment.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Not your assignment")
+    return assignment
+
+
+@router.post("/overview/{assignment_id}/status")
+def set_status(
+    assignment_id: int,
+    status: str = Form(...),
+    user: User = Depends(require_user),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    assignment = _own_assignment_or_403(db, assignment_id, user)
+    if status not in VALID_STATUSES:
+        raise HTTPException(status_code=400, detail="Invalid status")
+    update_assignment(
+        db, assignment.id, assignment.subject, assignment.title, assignment.due_date, status
+    )
+    return RedirectResponse("/overview", status_code=303)
+
+
+@router.post("/overview/{assignment_id}/delete")
+def delete_own(
+    assignment_id: int,
+    user: User = Depends(require_user),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    _own_assignment_or_403(db, assignment_id, user)
+    delete_assignment(db, assignment_id)
+    return RedirectResponse("/overview", status_code=303)

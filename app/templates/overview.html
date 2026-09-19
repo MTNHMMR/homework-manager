@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}My Assignments — Homework Manager{% endblock %}
+{% block content %}
+<h1>My assignments</h1>
+
+<table>
+    <thead>
+        <tr><th>Subject</th><th>Title</th><th>Due</th><th>Status</th><th></th></tr>
+    </thead>
+    <tbody>
+        {% for a in assignments %}
+        <tr>
+            <td>{{ a.subject }}</td>
+            <td>{{ a.title }}</td>
+            <td>{{ a.due_date }}</td>
+            <td class="status-{{ a.status }}">
+                <form method="post" action="/overview/{{ a.id }}/status" class="inline">
+                    <select name="status" onchange="this.form.submit()">
+                        {% for s in statuses %}
+                        <option value="{{ s }}" {% if s == a.status %}selected{% endif %}>{{ s.replace('_', ' ') }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </td>
+            <td>
+                <form method="post" action="/overview/{{ a.id }}/delete" class="inline">
+                    <button type="submit">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5">Nothing due — you're all caught up.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2>Add an assignment</h2>
+<form method="post" action="/overview/add" class="stack">
+    <label>Subject <input type="text" name="subject" required></label>
+    <label>Title <input type="text" name="title" required></label>
+    <label>Due date <input type="date" name="due_date" required></label>
+    <button type="submit">Add</button>
+</form>
+{% endblock %}

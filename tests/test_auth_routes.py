@@ -50,5 +50,5 @@ def test_logout_clears_session(client, db):
     assert resp.headers["location"] == "/login"
     # session is cleared: hitting a protected page now redirects to /login
     protected = client.get("/overview")
-    # NOTE: relaxed pending Task 8's real /overview route (see task-7 brief Step 11)
-    assert protected.status_code in (303, 404)
+    assert protected.status_code == 303
+    assert protected.headers["location"] == "/login"
