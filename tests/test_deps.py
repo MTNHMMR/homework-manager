@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.deps import get_current_user, require_admin, require_user
-from app.users import create_user
+from app.users import create_user, set_user_active
 
 
 def _build_test_app(db_path):
@@ -74,3 +74,22 @@ def test_require_admin_allows_admin(db_path, db):
     client.post(f"/set-session/{admin.id}")
     resp = client.get("/admin-only")
     assert resp.status_code == 200
+
+
+def test_get_current_user_none_when_deactivated(db_path, db):
+    user = create_user(db, "kid1", "pw", "Kid One")
+    set_user_active(db, user.id, False)
+    client = TestClient(_build_test_app(db_path), follow_redirects=False)
+    client.post(f"/set-session/{user.id}")
+    resp = client.get("/whoami")
+    assert resp.json() == {"user_id": None}
+
+
+def test_require_user_redirects_when_deactivated(db_path, db):
+    user = create_user(db, "kid1", "pw", "Kid One")
+    set_user_active(db, user.id, False)
+    client = TestClient(_build_test_app(db_path), follow_redirects=False)
+    client.post(f"/set-session/{user.id}")
+    resp = client.get("/protected")
+    assert resp.status_code == 303
+    assert resp.headers["location"] == "/login"
