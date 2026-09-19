@@ -29,7 +29,10 @@ def admin_dashboard(
 ):
     assignments = list_all_assignments(db)
 
-    kid_id_int = int(kid_id) if kid_id else None
+    try:
+        kid_id_int = int(kid_id) if kid_id else None
+    except ValueError:
+        kid_id_int = None
     if kid_id_int is not None:
         assignments = [a for a in assignments if a.user_id == kid_id_int]
 

@@ -41,3 +41,24 @@ def test_bootstrap_skips_when_env_vars_missing(db_path, db, monkeypatch, capsys)
     from app.users import list_users
 
     assert list_users(db) == []
+
+
+def test_bootstrap_runs_as_a_module_without_import_errors(tmp_path, monkeypatch):
+    import subprocess
+    import sys
+
+    db_path = tmp_path / "test.db"
+    env = {**__import__("os").environ, "HOMEWORK_DB_PATH": str(db_path)}
+    env.pop("ADMIN_USERNAME", None)
+    env.pop("ADMIN_PASSWORD", None)
+
+    result = subprocess.run(
+        [sys.executable, "-m", "scripts.bootstrap_admin"],
+        cwd=str(__import__("pathlib").Path(__file__).resolve().parent.parent),
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "ModuleNotFoundError" not in result.stderr

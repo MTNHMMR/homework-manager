@@ -1,3 +1,5 @@
+import pytest
+
 from app.assignments import create_assignment, get_assignment_by_id
 from app.users import create_user
 
@@ -112,3 +114,24 @@ def test_admin_dashboard_reset_status_filter_shows_everyone(client, db):
     assert resp.status_code == 200
     assert "Done One" in resp.text
     assert "Pending One" in resp.text
+
+
+def test_admin_dashboard_ignores_non_numeric_kid_id(client, db):
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    _login(client, "parent1")
+    resp = client.get("/admin?kid_id=not-a-number")
+    assert resp.status_code == 200
+
+
+@pytest.mark.parametrize(
+    "path,data",
+    [
+        ("/admin/1/status", {"status": "done"}),
+        ("/admin/1/delete", None),
+    ],
+)
+def test_admin_mutation_routes_reject_non_admin(client, db, path, data):
+    create_user(db, "kid1", "pw", "Kid One")
+    _login(client, "kid1")
+    resp = client.post(path, data=data or {})
+    assert resp.status_code == 403

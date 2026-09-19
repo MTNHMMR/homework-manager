@@ -65,8 +65,13 @@ def deactivate_user(
     admin: User = Depends(require_admin),
     db: sqlite3.Connection = Depends(get_db),
 ):
-    if get_user_by_id(db, user_id) is None:
+    target = get_user_by_id(db, user_id)
+    if target is None:
         raise HTTPException(status_code=404, detail="Not found")
+    if target.is_admin:
+        active_admin_count = sum(1 for u in list_users(db) if u.is_admin and u.active)
+        if active_admin_count <= 1:
+            raise HTTPException(status_code=400, detail="Cannot deactivate the last active admin")
     set_user_active(db, user_id, False)
     return RedirectResponse("/admin/users", status_code=303)
 
