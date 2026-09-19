@@ -1,0 +1,16 @@
+services:
+  homework-manager:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - homework-data:/data
+    environment:
+      SESSION_SECRET_KEY: ${SESSION_SECRET_KEY}
+      ADMIN_USERNAME: ${ADMIN_USERNAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      ADMIN_DISPLAY_NAME: ${ADMIN_DISPLAY_NAME:-Admin}
+    restart: unless-stopped
+
+volumes:
+  homework-data:
