@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Manage Users — Homework Manager{% endblock %}
+{% block content %}
+<h1>Manage users</h1>
+
+<table>
+    <thead>
+        <tr><th>Name</th><th>Username</th><th>Admin</th><th>Active</th><th>Reset password</th><th></th></tr>
+    </thead>
+    <tbody>
+        {% for u in users %}
+        <tr>
+            <td>{{ u.display_name }}</td>
+            <td>{{ u.username }}</td>
+            <td>{{ "Yes" if u.is_admin else "No" }}</td>
+            <td>{{ "Yes" if u.active else "No" }}</td>
+            <td>
+                <form method="post" action="/admin/users/{{ u.id }}/reset-password" class="inline">
+                    <input type="password" name="new_password" placeholder="New password" required minlength="6">
+                    <button type="submit">Reset</button>
+                </form>
+            </td>
+            <td>
+                {% if u.active %}
+                <form method="post" action="/admin/users/{{ u.id }}/deactivate" class="inline">
+                    <button type="submit">Deactivate</button>
+                </form>
+                {% else %}
+                <form method="post" action="/admin/users/{{ u.id }}/activate" class="inline">
+                    <button type="submit">Activate</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2>Add a user</h2>
+<form method="post" action="/admin/users/add" class="stack">
+    <label>Display name <input type="text" name="display_name" required></label>
+    <label>Username <input type="text" name="username" required></label>
+    <label>Password <input type="password" name="password" required minlength="6"></label>
+    <label><input type="checkbox" name="is_admin"> Admin</label>
+    <button type="submit">Add user</button>
+</form>
+{% endblock %}
