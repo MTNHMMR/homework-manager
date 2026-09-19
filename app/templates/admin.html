@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}All Assignments — Homework Manager{% endblock %}
+{% block content %}
+<h1>All assignments</h1>
+
+<form method="get" action="/admin" class="stack">
+    <label>Kid
+        <select name="kid_id" onchange="this.form.submit()">
+            <option value="">All kids</option>
+            {% for kid in kids %}
+            <option value="{{ kid.id }}" {% if selected_kid_id == kid.id %}selected{% endif %}>{{ kid.display_name }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label>Status
+        <select name="status" onchange="this.form.submit()">
+            <option value="">All statuses</option>
+            {% for s in statuses %}
+            <option value="{{ s }}" {% if selected_status == s %}selected{% endif %}>{{ s.replace('_', ' ') }}</option>
+            {% endfor %}
+        </select>
+    </label>
+</form>
+
+<table>
+    <thead>
+        <tr><th>Kid</th><th>Subject</th><th>Title</th><th>Due</th><th>Status</th><th></th></tr>
+    </thead>
+    <tbody>
+        {% for a in assignments %}
+        <tr>
+            <td>{{ users_by_id[a.user_id].display_name }}</td>
+            <td>{{ a.subject }}</td>
+            <td>{{ a.title }}</td>
+            <td>{{ a.due_date }}</td>
+            <td class="status-{{ a.status }}">
+                <form method="post" action="/admin/{{ a.id }}/status" class="inline">
+                    <select name="status" onchange="this.form.submit()">
+                        {% for s in statuses %}
+                        <option value="{{ s }}" {% if s == a.status %}selected{% endif %}>{{ s.replace('_', ' ') }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </td>
+            <td>
+                <form method="post" action="/admin/{{ a.id }}/delete" class="inline">
+                    <button type="submit">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6">No assignments logged yet.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
