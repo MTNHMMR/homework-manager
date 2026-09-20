@@ -21,8 +21,10 @@ manage every kid's assignments and manage user accounts.
    docker compose up --build
    ```
 
-3. Open `http://localhost:8000`, log in with the admin account from step 1,
-   and add the kids (and any other admins) under "Manage users".
+3. Open `http://localhost:8010` (the host port is set in `docker-compose.yml`
+   — change it if 8010 is already taken on your host), log in with the admin
+   account from step 1, and add the kids (and any other admins) under
+   "Manage users".
 
 Data lives in the `homework-data` Docker volume (`/data/homework.db` inside
 the container) and survives `docker compose down` — only `docker compose

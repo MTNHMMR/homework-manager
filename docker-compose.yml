@@ -2,7 +2,7 @@ services:
   homework-manager:
     build: .
     ports:
-      - "8000:8000"
+      - "8010:8000"
     volumes:
       - homework-data:/data
     environment:
