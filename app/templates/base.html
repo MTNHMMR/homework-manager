@@ -6,7 +6,7 @@
     <title>{% block title %}Homework Manager{% endblock %}</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
+<body data-theme="{{ user.theme if user else 'light' }}" data-accent="{{ user.accent_color if user else 'blue' }}">
     <nav>
         <a class="brand" href="/">Homework Manager</a>
         {% if user %}
@@ -14,9 +14,11 @@
             {% if user.is_admin %}
                 <a href="/admin">All assignments</a>
                 <a href="/admin/users">Manage users</a>
+                <a href="/admin/classes">Manage classes</a>
             {% else %}
                 <a href="/overview">My assignments</a>
             {% endif %}
+            <a href="/settings">Settings</a>
             <form method="post" action="/logout" class="inline">
                 <button type="submit">Log out</button>
             </form>

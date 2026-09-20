@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Settings — Homework Manager{% endblock %}
+{% block content %}
+<h1>My settings</h1>
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+<form method="post" action="/settings" class="stack">
+    <label>Theme
+        <select name="theme">
+            {% for t in themes %}
+            <option value="{{ t }}" {% if t == user.theme %}selected{% endif %}>{{ t.title() }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label>Accent color
+        <select name="accent_color">
+            {% for a in accents %}
+            <option value="{{ a }}" {% if a == user.accent_color %}selected{% endif %}>{{ a.title() }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <button type="submit">Save</button>
+</form>
+{% endblock %}

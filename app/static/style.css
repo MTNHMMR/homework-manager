@@ -1,14 +1,54 @@
-body { font-family: system-ui, sans-serif; margin: 0; background: #f7f7f9; color: #1a1a1a; }
-nav { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1.5rem; background: #22314a; color: white; }
+:root {
+    --accent: #3a7bd5;
+    --bg: #f7f7f9;
+    --text: #1a1a1a;
+    --card-bg: #ffffff;
+    --border: #ddd;
+    --radius: 4px;
+}
+
+body[data-theme="dark"] {
+    --bg: #14161f;
+    --text: #e8e8ec;
+    --card-bg: #1c1e29;
+    --border: #2a2d3a;
+}
+
+body[data-theme="fun"] {
+    --bg: #fff3e9;
+    --card-bg: #ffffff;
+    --border: #f0d9c0;
+    --radius: 14px;
+}
+
+body[data-theme="minimal"] {
+    --bg: #ffffff;
+    --card-bg: #ffffff;
+    --border: #1a1a1a;
+    --radius: 0;
+}
+
+body[data-accent="red"] { --accent: #d64545; }
+body[data-accent="orange"] { --accent: #e08a2e; }
+body[data-accent="yellow"] { --accent: #d6b32e; }
+body[data-accent="green"] { --accent: #4a9d4f; }
+body[data-accent="teal"] { --accent: #2e9d8f; }
+body[data-accent="blue"] { --accent: #3a7bd5; }
+body[data-accent="purple"] { --accent: #7b4fd6; }
+body[data-accent="pink"] { --accent: #d6469b; }
+
+body { font-family: system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text); }
+nav { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1.5rem; background: var(--accent); color: white; }
 nav a, nav .who { color: white; text-decoration: none; }
 nav .brand { font-weight: bold; margin-right: auto; }
 nav form.inline { display: inline; margin: 0; }
 nav button { background: none; border: 1px solid white; color: white; padding: 0.25rem 0.6rem; border-radius: 4px; cursor: pointer; }
 main { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-th, td { text-align: left; padding: 0.5rem; border-bottom: 1px solid #ddd; }
+table { width: 100%; border-collapse: collapse; margin-top: 1rem; background: var(--card-bg); }
+th, td { text-align: left; padding: 0.5rem; border-bottom: 1px solid var(--border); }
 form.stack label { display: block; margin-bottom: 0.5rem; }
 .error { color: #b00020; }
 .status-done { color: #1a7f37; font-weight: bold; }
 .status-in_progress { color: #9a6700; }
 .status-not_started { color: #57606a; }
+button, select, input { border-radius: var(--radius); }
