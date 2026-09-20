@@ -24,7 +24,7 @@
 
 <table>
     <thead>
-        <tr><th>Kid</th><th>Subject</th><th>Title</th><th>Due</th><th>Status</th><th></th></tr>
+        <tr><th>Kid</th><th>Subject</th><th>Title</th><th>Due</th><th>Status</th><th></th><th></th></tr>
     </thead>
     <tbody>
         {% for a in assignments %}
@@ -42,6 +42,7 @@
                     </select>
                 </form>
             </td>
+            <td><a href="/admin/{{ a.id }}/edit">Edit</a></td>
             <td>
                 <form method="post" action="/admin/{{ a.id }}/delete" class="inline">
                     <button type="submit">Delete</button>
@@ -49,7 +50,7 @@
             </td>
         </tr>
         {% else %}
-        <tr><td colspan="6">No assignments logged yet.</td></tr>
+        <tr><td colspan="7">No assignments logged yet.</td></tr>
         {% endfor %}
     </tbody>
 </table>

@@ -1,4 +1,5 @@
 import sqlite3
+from typing import Optional
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -40,12 +41,31 @@ def overview(
 
 @router.post("/overview/add")
 def add_assignment(
-    subject: str = Form(...),
-    title: str = Form(...),
-    due_date: str = Form(...),
+    request: Request,
+    subject: Optional[str] = Form(None),
+    title: Optional[str] = Form(None),
+    due_date: Optional[str] = Form(None),
     user: User = Depends(require_user),
     db: sqlite3.Connection = Depends(get_db),
 ):
+    if not (subject and subject.strip()) or not (title and title.strip()) or not (
+        due_date and due_date.strip()
+    ):
+        assignments = list_assignments_for_user(db, user.id)
+        return templates.TemplateResponse(
+            "overview.html",
+            {
+                "request": request,
+                "user": user,
+                "assignments": assignments,
+                "statuses": VALID_STATUSES,
+                "error": "Subject, title, and due date are all required.",
+                "form_subject": subject or "",
+                "form_title": title or "",
+                "form_due_date": due_date or "",
+            },
+            status_code=400,
+        )
     create_assignment(db, user.id, subject, title, due_date)
     return RedirectResponse("/overview", status_code=303)
 
@@ -72,6 +92,58 @@ def set_status(
     update_assignment(
         db, assignment.id, assignment.subject, assignment.title, assignment.due_date, status
     )
+    return RedirectResponse("/overview", status_code=303)
+
+
+@router.get("/overview/{assignment_id}/edit", response_class=HTMLResponse)
+def edit_assignment_form(
+    assignment_id: int,
+    request: Request,
+    user: User = Depends(require_user),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    assignment = _own_assignment_or_403(db, assignment_id, user)
+    return templates.TemplateResponse(
+        "overview_edit.html",
+        {
+            "request": request,
+            "user": user,
+            "assignment": assignment,
+            "form_subject": assignment.subject,
+            "form_title": assignment.title,
+            "form_due_date": assignment.due_date,
+        },
+    )
+
+
+@router.post("/overview/{assignment_id}/edit")
+def edit_assignment(
+    assignment_id: int,
+    request: Request,
+    subject: Optional[str] = Form(None),
+    title: Optional[str] = Form(None),
+    due_date: Optional[str] = Form(None),
+    user: User = Depends(require_user),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    assignment = _own_assignment_or_403(db, assignment_id, user)
+    if not (subject and subject.strip()) or not (title and title.strip()) or not (
+        due_date and due_date.strip()
+    ):
+        return templates.TemplateResponse(
+            "overview_edit.html",
+            {
+                "request": request,
+                "user": user,
+                "assignment": assignment,
+                "error": "Subject, title, and due date are all required.",
+                "form_subject": subject or "",
+                "form_title": title or "",
+                "form_due_date": due_date or "",
+            },
+            status_code=400,
+        )
+    update_assignment(db, assignment.id, subject, title, due_date, assignment.status)
     return RedirectResponse("/overview", status_code=303)
 
 

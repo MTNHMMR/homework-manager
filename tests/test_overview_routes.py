@@ -87,3 +87,82 @@ def test_cannot_delete_another_users_assignment(client, db):
     from app.assignments import get_assignment_by_id
 
     assert get_assignment_by_id(db, assignment.id) is not None
+
+
+def test_edit_page_renders_for_own_assignment(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    assignment = create_assignment(db, kid.id, "Math", "Worksheet", "2026-09-25")
+    _login(client, "kid1")
+
+    resp = client.get(f"/overview/{assignment.id}/edit")
+    assert resp.status_code == 200
+    assert "Math" in resp.text
+    assert "Worksheet" in resp.text
+    assert "2026-09-25" in resp.text
+
+
+def test_edit_page_403_for_another_users_assignment(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Kid One")
+    kid2 = create_user(db, "kid2", "pw", "Kid Two")
+    assignment = create_assignment(db, kid2.id, "Science", "Lab", "2026-09-26")
+
+    _login(client, "kid1")
+    resp = client.get(f"/overview/{assignment.id}/edit")
+    assert resp.status_code == 403
+
+
+def test_edit_updates_own_assignment(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    assignment = create_assignment(db, kid.id, "Math", "Worksheet", "2026-09-25")
+    _login(client, "kid1")
+
+    resp = client.post(
+        f"/overview/{assignment.id}/edit",
+        data={"subject": "Science", "title": "Lab Report", "due_date": "2026-10-01"},
+    )
+    assert resp.status_code == 303
+    assert resp.headers["location"] == "/overview"
+
+    from app.assignments import get_assignment_by_id
+
+    updated = get_assignment_by_id(db, assignment.id)
+    assert updated.subject == "Science"
+    assert updated.title == "Lab Report"
+    assert updated.due_date == "2026-10-01"
+    assert updated.status == "not_started"
+
+
+def test_edit_403_for_another_users_assignment(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Kid One")
+    kid2 = create_user(db, "kid2", "pw", "Kid Two")
+    assignment = create_assignment(db, kid2.id, "Science", "Lab", "2026-09-26")
+
+    _login(client, "kid1")
+    resp = client.post(
+        f"/overview/{assignment.id}/edit",
+        data={"subject": "Hacked", "title": "Hacked", "due_date": "2026-10-01"},
+    )
+    assert resp.status_code == 403
+
+    from app.assignments import get_assignment_by_id
+
+    unchanged = get_assignment_by_id(db, assignment.id)
+    assert unchanged.subject == "Science"
+    assert unchanged.title == "Lab"
+
+
+def test_add_assignment_with_missing_title_reenders_form_with_error(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    _login(client, "kid1")
+
+    resp = client.post(
+        "/overview/add",
+        data={"subject": "Math", "due_date": "2026-09-25"},
+    )
+    assert resp.status_code == 400
+    assert "text/html" in resp.headers["content-type"]
+    assert "required" in resp.text.lower()
+
+    from app.assignments import list_assignments_for_user
+
+    assert list_assignments_for_user(db, kid.id) == []

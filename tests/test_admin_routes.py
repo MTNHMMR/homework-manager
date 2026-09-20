@@ -135,3 +135,87 @@ def test_admin_mutation_routes_reject_non_admin(client, db, path, data):
     _login(client, "kid1")
     resp = client.post(path, data=data or {})
     assert resp.status_code == 403
+
+
+def test_admin_edit_page_renders_for_any_assignment(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    assignment = create_assignment(db, kid1.id, "Math", "Worksheet", "2026-09-25")
+
+    _login(client, "parent1")
+    resp = client.get(f"/admin/{assignment.id}/edit")
+    assert resp.status_code == 200
+    assert "Math" in resp.text
+    assert "Worksheet" in resp.text
+    assert "2026-09-25" in resp.text
+
+
+def test_admin_edit_page_404_for_missing_assignment(client, db):
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    _login(client, "parent1")
+    resp = client.get("/admin/999/edit")
+    assert resp.status_code == 404
+
+
+def test_admin_edit_updates_any_assignment_including_status(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    assignment = create_assignment(db, kid1.id, "Math", "Worksheet", "2026-09-25")
+
+    _login(client, "parent1")
+    resp = client.post(
+        f"/admin/{assignment.id}/edit",
+        data={
+            "subject": "Science",
+            "title": "Lab Report",
+            "due_date": "2026-10-01",
+            "status": "done",
+        },
+    )
+    assert resp.status_code == 303
+    assert resp.headers["location"] == "/admin"
+
+    updated = get_assignment_by_id(db, assignment.id)
+    assert updated.subject == "Science"
+    assert updated.title == "Lab Report"
+    assert updated.due_date == "2026-10-01"
+    assert updated.status == "done"
+
+
+def test_admin_edit_rejects_invalid_status(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    assignment = create_assignment(db, kid1.id, "Math", "Worksheet", "2026-09-25")
+
+    _login(client, "parent1")
+    resp = client.post(
+        f"/admin/{assignment.id}/edit",
+        data={
+            "subject": "Science",
+            "title": "Lab Report",
+            "due_date": "2026-10-01",
+            "status": "not-a-real-status",
+        },
+    )
+    assert resp.status_code == 400
+
+
+def test_admin_add_edit_with_missing_field_reenders_form_with_error(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    assignment = create_assignment(db, kid1.id, "Math", "Worksheet", "2026-09-25")
+
+    _login(client, "parent1")
+    resp = client.post(
+        f"/admin/{assignment.id}/edit",
+        data={"subject": "Science", "due_date": "2026-10-01", "status": "done"},
+    )
+    assert resp.status_code == 400
+    assert "text/html" in resp.headers["content-type"]
+    assert "required" in resp.text.lower()
+
+    unchanged = get_assignment_by_id(db, assignment.id)
+    assert unchanged.subject == "Math"
+    assert unchanged.title == "Worksheet"
+    assert unchanged.due_date == "2026-09-25"
+    assert unchanged.status == "not_started"

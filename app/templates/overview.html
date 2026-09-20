@@ -5,7 +5,7 @@
 
 <table>
     <thead>
-        <tr><th>Subject</th><th>Title</th><th>Due</th><th>Status</th><th></th></tr>
+        <tr><th>Subject</th><th>Title</th><th>Due</th><th>Status</th><th></th><th></th></tr>
     </thead>
     <tbody>
         {% for a in assignments %}
@@ -22,6 +22,7 @@
                     </select>
                 </form>
             </td>
+            <td><a href="/overview/{{ a.id }}/edit">Edit</a></td>
             <td>
                 <form method="post" action="/overview/{{ a.id }}/delete" class="inline">
                     <button type="submit">Delete</button>
@@ -29,16 +30,17 @@
             </td>
         </tr>
         {% else %}
-        <tr><td colspan="5">Nothing due — you're all caught up.</td></tr>
+        <tr><td colspan="6">Nothing due — you're all caught up.</td></tr>
         {% endfor %}
     </tbody>
 </table>
 
 <h2>Add an assignment</h2>
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
 <form method="post" action="/overview/add" class="stack">
-    <label>Subject <input type="text" name="subject" required></label>
-    <label>Title <input type="text" name="title" required></label>
-    <label>Due date <input type="date" name="due_date" required></label>
+    <label>Subject <input type="text" name="subject" value="{{ form_subject or '' }}" required></label>
+    <label>Title <input type="text" name="title" value="{{ form_title or '' }}" required></label>
+    <label>Due date <input type="date" name="due_date" value="{{ form_due_date or '' }}" required></label>
     <button type="submit">Add</button>
 </form>
 {% endblock %}

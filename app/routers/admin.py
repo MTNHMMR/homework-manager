@@ -75,6 +75,69 @@ def admin_set_status(
     return RedirectResponse("/admin", status_code=303)
 
 
+@router.get("/admin/{assignment_id}/edit", response_class=HTMLResponse)
+def admin_edit_form(
+    assignment_id: int,
+    request: Request,
+    admin: User = Depends(require_admin),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    assignment = get_assignment_by_id(db, assignment_id)
+    if assignment is None:
+        raise HTTPException(status_code=404, detail="Not found")
+    return templates.TemplateResponse(
+        "admin_edit.html",
+        {
+            "request": request,
+            "user": admin,
+            "assignment": assignment,
+            "statuses": VALID_STATUSES,
+            "form_subject": assignment.subject,
+            "form_title": assignment.title,
+            "form_due_date": assignment.due_date,
+            "form_status": assignment.status,
+        },
+    )
+
+
+@router.post("/admin/{assignment_id}/edit")
+def admin_edit(
+    assignment_id: int,
+    request: Request,
+    subject: Optional[str] = Form(None),
+    title: Optional[str] = Form(None),
+    due_date: Optional[str] = Form(None),
+    status: Optional[str] = Form(None),
+    admin: User = Depends(require_admin),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    assignment = get_assignment_by_id(db, assignment_id)
+    if assignment is None:
+        raise HTTPException(status_code=404, detail="Not found")
+    if not (subject and subject.strip()) or not (title and title.strip()) or not (
+        due_date and due_date.strip()
+    ):
+        return templates.TemplateResponse(
+            "admin_edit.html",
+            {
+                "request": request,
+                "user": admin,
+                "assignment": assignment,
+                "statuses": VALID_STATUSES,
+                "error": "Subject, title, and due date are all required.",
+                "form_subject": subject or "",
+                "form_title": title or "",
+                "form_due_date": due_date or "",
+                "form_status": status or assignment.status,
+            },
+            status_code=400,
+        )
+    if status not in VALID_STATUSES:
+        raise HTTPException(status_code=400, detail="Invalid status")
+    update_assignment(db, assignment.id, subject, title, due_date, status)
+    return RedirectResponse("/admin", status_code=303)
+
+
 @router.post("/admin/{assignment_id}/delete")
 def admin_delete(
     assignment_id: int,

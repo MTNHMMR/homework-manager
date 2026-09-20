@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Edit Assignment — Homework Manager{% endblock %}
+{% block content %}
+<h1>Edit assignment</h1>
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+<form method="post" action="/overview/{{ assignment.id }}/edit" class="stack">
+    <label>Subject <input type="text" name="subject" value="{{ form_subject or '' }}" required></label>
+    <label>Title <input type="text" name="title" value="{{ form_title or '' }}" required></label>
+    <label>Due date <input type="date" name="due_date" value="{{ form_due_date or '' }}" required></label>
+    <button type="submit">Save</button>
+</form>
+{% endblock %}
