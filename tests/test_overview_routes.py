@@ -1,4 +1,5 @@
 from app.assignments import create_assignment
+from app.classes import create_class
 from app.users import create_user
 
 
@@ -166,3 +167,73 @@ def test_add_assignment_with_missing_title_reenders_form_with_error(client, db):
     from app.assignments import list_assignments_for_user
 
     assert list_assignments_for_user(db, kid.id) == []
+
+
+def test_add_assignment_shows_dropdown_when_active_classes_exist(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_class(db, kid.id, "Math", period=1)
+    _login(client, "kid1")
+    resp = client.get("/overview")
+    assert '<select name="subject"' in resp.text
+
+
+def test_add_assignment_shows_free_text_when_no_active_classes(client, db):
+    create_user(db, "kid1", "pw", "Kid One")
+    _login(client, "kid1")
+    resp = client.get("/overview")
+    assert 'type="text" name="subject"' in resp.text
+
+
+def test_add_assignment_accepts_subject_from_active_class_list(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_class(db, kid.id, "Math", period=1)
+    _login(client, "kid1")
+    resp = client.post(
+        "/overview/add", data={"subject": "Math", "title": "Worksheet", "due_date": "2026-09-25"}
+    )
+    assert resp.status_code == 303
+
+
+def test_add_assignment_rejects_subject_not_in_active_class_list(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_class(db, kid.id, "Math", period=1)
+    _login(client, "kid1")
+    resp = client.post(
+        "/overview/add", data={"subject": "Gym", "title": "Worksheet", "due_date": "2026-09-25"}
+    )
+    assert resp.status_code == 400
+
+    from app.assignments import list_assignments_for_user
+
+    assert list_assignments_for_user(db, kid.id) == []
+
+
+def test_add_assignment_allows_free_text_when_no_active_classes(client, db):
+    create_user(db, "kid1", "pw", "Kid One")
+    _login(client, "kid1")
+    resp = client.post(
+        "/overview/add",
+        data={"subject": "Anything", "title": "Worksheet", "due_date": "2026-09-25"},
+    )
+    assert resp.status_code == 303
+
+
+def test_edit_page_shows_dropdown_when_active_classes_exist(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_class(db, kid.id, "Math", period=1)
+    assignment = create_assignment(db, kid.id, "Math", "Worksheet", "2026-09-25")
+    _login(client, "kid1")
+    resp = client.get(f"/overview/{assignment.id}/edit")
+    assert '<select name="subject"' in resp.text
+
+
+def test_edit_rejects_subject_not_in_active_class_list(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_class(db, kid.id, "Math", period=1)
+    assignment = create_assignment(db, kid.id, "Math", "Worksheet", "2026-09-25")
+    _login(client, "kid1")
+    resp = client.post(
+        f"/overview/{assignment.id}/edit",
+        data={"subject": "Gym", "title": "Worksheet", "due_date": "2026-09-25"},
+    )
+    assert resp.status_code == 400

@@ -14,6 +14,7 @@ from app.assignments import (
     list_assignments_for_user,
     update_assignment,
 )
+from app.classes import list_active_classes_for_user
 from app.deps import get_db, require_user
 from app.users import User
 
@@ -28,6 +29,7 @@ def overview(
     db: sqlite3.Connection = Depends(get_db),
 ):
     assignments = list_assignments_for_user(db, user.id)
+    active_classes = list_active_classes_for_user(db, user.id)
     return templates.TemplateResponse(
         "overview.html",
         {
@@ -35,6 +37,7 @@ def overview(
             "user": user,
             "assignments": assignments,
             "statuses": VALID_STATUSES,
+            "active_classes": active_classes,
         },
     )
 
@@ -48,6 +51,7 @@ def add_assignment(
     user: User = Depends(require_user),
     db: sqlite3.Connection = Depends(get_db),
 ):
+    active_classes = list_active_classes_for_user(db, user.id)
     if not (subject and subject.strip()) or not (title and title.strip()) or not (
         due_date and due_date.strip()
     ):
@@ -59,10 +63,28 @@ def add_assignment(
                 "user": user,
                 "assignments": assignments,
                 "statuses": VALID_STATUSES,
+                "active_classes": active_classes,
                 "error": "Subject, title, and due date are all required.",
                 "form_subject": subject or "",
                 "form_title": title or "",
                 "form_due_date": due_date or "",
+            },
+            status_code=400,
+        )
+    if active_classes and subject not in {c.name for c in active_classes}:
+        assignments = list_assignments_for_user(db, user.id)
+        return templates.TemplateResponse(
+            "overview.html",
+            {
+                "request": request,
+                "user": user,
+                "assignments": assignments,
+                "statuses": VALID_STATUSES,
+                "active_classes": active_classes,
+                "error": "Please choose a subject from the list.",
+                "form_subject": subject,
+                "form_title": title,
+                "form_due_date": due_date,
             },
             status_code=400,
         )
@@ -103,12 +125,14 @@ def edit_assignment_form(
     db: sqlite3.Connection = Depends(get_db),
 ):
     assignment = _own_assignment_or_403(db, assignment_id, user)
+    active_classes = list_active_classes_for_user(db, user.id)
     return templates.TemplateResponse(
         "overview_edit.html",
         {
             "request": request,
             "user": user,
             "assignment": assignment,
+            "active_classes": active_classes,
             "form_subject": assignment.subject,
             "form_title": assignment.title,
             "form_due_date": assignment.due_date,
@@ -127,6 +151,7 @@ def edit_assignment(
     db: sqlite3.Connection = Depends(get_db),
 ):
     assignment = _own_assignment_or_403(db, assignment_id, user)
+    active_classes = list_active_classes_for_user(db, user.id)
     if not (subject and subject.strip()) or not (title and title.strip()) or not (
         due_date and due_date.strip()
     ):
@@ -136,10 +161,26 @@ def edit_assignment(
                 "request": request,
                 "user": user,
                 "assignment": assignment,
+                "active_classes": active_classes,
                 "error": "Subject, title, and due date are all required.",
                 "form_subject": subject or "",
                 "form_title": title or "",
                 "form_due_date": due_date or "",
+            },
+            status_code=400,
+        )
+    if active_classes and subject not in {c.name for c in active_classes}:
+        return templates.TemplateResponse(
+            "overview_edit.html",
+            {
+                "request": request,
+                "user": user,
+                "assignment": assignment,
+                "active_classes": active_classes,
+                "error": "Please choose a subject from the list.",
+                "form_subject": subject,
+                "form_title": title,
+                "form_due_date": due_date,
             },
             status_code=400,
         )
