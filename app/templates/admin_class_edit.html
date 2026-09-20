@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Edit Class — Homework Manager{% endblock %}
+{% block content %}
+<h1>Edit class</h1>
+<form method="post" action="/admin/classes/{{ cls.id }}/edit" class="stack">
+    <label>Period <input type="number" name="period" value="{{ cls.period if cls.period is not none else '' }}"></label>
+    <label>Class name <input type="text" name="name" value="{{ cls.name }}" required></label>
+    <label>Teacher <input type="text" name="teacher" value="{{ cls.teacher or '' }}"></label>
+    <label>Expires on <input type="date" name="expires_on" value="{{ cls.expires_on or '' }}"></label>
+    <button type="submit">Save</button>
+</form>
+{% endblock %}

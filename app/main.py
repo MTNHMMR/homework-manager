@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.database import get_connection, init_db
-from app.routers import admin, admin_users, auth, overview, settings
+from app.routers import admin, admin_classes, admin_users, auth, overview, settings
 
 
 def create_app() -> FastAPI:
@@ -29,6 +29,7 @@ def create_app() -> FastAPI:
     app.include_router(auth.router)
     app.include_router(overview.router)
     app.include_router(admin.router)
+    app.include_router(admin_classes.router)
     app.include_router(admin_users.router)
     app.include_router(settings.router)
 

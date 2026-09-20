@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Manage Classes — Homework Manager{% endblock %}
+{% block content %}
+<h1>Manage classes</h1>
+
+{% for kid in kids %}
+<h2>{{ kid.display_name }}</h2>
+<table>
+    <thead>
+        <tr><th>Period</th><th>Class</th><th>Teacher</th><th>Expires</th><th></th><th></th></tr>
+    </thead>
+    <tbody>
+        {% for c in classes_by_kid[kid.id] %}
+        <tr>
+            <td>{{ c.period if c.period is not none else '' }}</td>
+            <td>{{ c.name }}</td>
+            <td>{{ c.teacher or '' }}</td>
+            <td>{{ c.expires_on or 'never' }}</td>
+            <td><a href="/admin/classes/{{ c.id }}/edit">Edit</a></td>
+            <td>
+                <form method="post" action="/admin/classes/{{ c.id }}/delete" class="inline">
+                    <button type="submit">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6">No classes yet.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endfor %}
+{% if not kids %}
+<p>No kids yet — add one under <a href="/admin/users">Manage users</a> first.</p>
+{% endif %}
+
+{% if kids %}
+<h2>Add a class</h2>
+<form method="post" action="/admin/classes/add" class="stack">
+    <label>Kid
+        <select name="user_id" required>
+            {% for kid in kids %}
+            <option value="{{ kid.id }}">{{ kid.display_name }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label>Period <input type="number" name="period"></label>
+    <label>Class name <input type="text" name="name" required></label>
+    <label>Teacher <input type="text" name="teacher"></label>
+    <label>Expires on <input type="date" name="expires_on"></label>
+    <button type="submit">Add class</button>
+</form>
+{% endif %}
+{% endblock %}
