@@ -36,17 +36,67 @@ def test_admin_dashboard_shows_all_kids_assignments(client, db):
     assert "Kid2 Lab" in resp.text
 
 
-def test_admin_dashboard_filters_by_kid(client, db):
-    kid1 = create_user(db, "kid1", "pw", "Kid One")
-    kid2 = create_user(db, "kid2", "pw", "Kid Two")
+def test_admin_dashboard_groups_assignments_by_kid(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Alice")
+    kid2 = create_user(db, "kid2", "pw", "Bob")
     create_user(db, "parent1", "pw", "Parent One", is_admin=True)
-    create_assignment(db, kid1.id, "Math", "Kid1 Worksheet", "2026-09-25")
-    create_assignment(db, kid2.id, "Science", "Kid2 Lab", "2026-09-26")
+    create_assignment(db, kid1.id, "Math", "Alice Worksheet", "2026-09-25")
+    create_assignment(db, kid2.id, "Science", "Bob Lab", "2026-09-26")
 
     _login(client, "parent1")
-    resp = client.get(f"/admin?kid_id={kid1.id}")
-    assert "Kid1 Worksheet" in resp.text
-    assert "Kid2 Lab" not in resp.text
+    resp = client.get("/admin")
+    assert resp.status_code == 200
+    # Alice's heading and assignment appear before Bob's (display-name order)
+    alice_pos = resp.text.index("Alice")
+    bob_pos = resp.text.index("Bob")
+    assert alice_pos < bob_pos
+    assert "Alice Worksheet" in resp.text
+    assert "Bob Lab" in resp.text
+
+
+def test_admin_dashboard_omits_kid_with_no_matching_assignments(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Alice")
+    kid2 = create_user(db, "kid2", "pw", "Bob")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    create_assignment(db, kid1.id, "Math", "Alice Worksheet", "2026-09-25", status="done")
+    create_assignment(db, kid2.id, "Science", "Bob Lab", "2026-09-26", status="not_started")
+
+    _login(client, "parent1")
+    resp = client.get("/admin?status=not_started")
+    assert "Bob" in resp.text
+    assert "Bob Lab" in resp.text
+    assert "Alice" not in resp.text
+
+
+def test_admin_dashboard_kid_id_query_param_is_ignored(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    create_assignment(db, kid1.id, "Math", "Worksheet", "2026-09-25")
+
+    _login(client, "parent1")
+    resp = client.get("/admin?kid_id=999")
+    assert resp.status_code == 200
+    assert "Worksheet" in resp.text
+
+
+def test_admin_dashboard_marks_overdue_not_done_assignment(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    create_assignment(db, kid1.id, "Math", "Overdue HW", "2020-01-01")
+
+    _login(client, "parent1")
+    resp = client.get("/admin")
+    assert 'class="overdue"' in resp.text
+
+
+def test_admin_dashboard_does_not_mark_done_assignment_overdue(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    create_assignment(db, kid1.id, "Math", "Finished HW", "2020-01-01", status="done")
+
+    _login(client, "parent1")
+    resp = client.get("/admin")
+    assert 'class="overdue"' not in resp.text
 
 
 def test_admin_dashboard_filters_by_status(client, db):
@@ -90,20 +140,6 @@ def test_admin_status_update_on_missing_assignment_is_404(client, db):
     assert resp.status_code == 404
 
 
-def test_admin_dashboard_reset_kid_filter_shows_everyone(client, db):
-    kid1 = create_user(db, "kid1", "pw", "Kid One")
-    kid2 = create_user(db, "kid2", "pw", "Kid Two")
-    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
-    create_assignment(db, kid1.id, "Math", "Kid1 Worksheet", "2026-09-25")
-    create_assignment(db, kid2.id, "Science", "Kid2 Lab", "2026-09-26")
-
-    _login(client, "parent1")
-    resp = client.get("/admin?kid_id=")
-    assert resp.status_code == 200
-    assert "Kid1 Worksheet" in resp.text
-    assert "Kid2 Lab" in resp.text
-
-
 def test_admin_dashboard_reset_status_filter_shows_everyone(client, db):
     kid1 = create_user(db, "kid1", "pw", "Kid One")
     create_user(db, "parent1", "pw", "Parent One", is_admin=True)
@@ -115,13 +151,6 @@ def test_admin_dashboard_reset_status_filter_shows_everyone(client, db):
     assert resp.status_code == 200
     assert "Done One" in resp.text
     assert "Pending One" in resp.text
-
-
-def test_admin_dashboard_ignores_non_numeric_kid_id(client, db):
-    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
-    _login(client, "parent1")
-    resp = client.get("/admin?kid_id=not-a-number")
-    assert resp.status_code == 200
 
 
 @pytest.mark.parametrize(

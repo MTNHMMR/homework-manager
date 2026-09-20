@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import date
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
@@ -23,37 +24,36 @@ templates = Jinja2Templates(directory="app/templates")
 @router.get("/admin", response_class=HTMLResponse)
 def admin_dashboard(
     request: Request,
-    kid_id: Optional[str] = None,
     status: Optional[str] = None,
     admin: User = Depends(require_admin),
     db: sqlite3.Connection = Depends(get_db),
 ):
     assignments = list_all_assignments(db)
 
-    try:
-        kid_id_int = int(kid_id) if kid_id else None
-    except ValueError:
-        kid_id_int = None
-    if kid_id_int is not None:
-        assignments = [a for a in assignments if a.user_id == kid_id_int]
-
     status_filter = status if status else None
     if status_filter is not None:
         assignments = [a for a in assignments if a.status == status_filter]
 
-    users_by_id = {u.id: u for u in list_users(db)}
+    assignments_by_kid_id: dict[int, list] = {}
+    for a in assignments:
+        assignments_by_kid_id.setdefault(a.user_id, []).append(a)
+
+    kids = [u for u in list_users(db) if not u.is_admin]
+    groups = [
+        (kid, assignments_by_kid_id[kid.id])
+        for kid in kids
+        if kid.id in assignments_by_kid_id
+    ]
 
     return templates.TemplateResponse(
         "admin.html",
         {
             "request": request,
             "user": admin,
-            "assignments": assignments,
-            "users_by_id": users_by_id,
-            "kids": [u for u in users_by_id.values() if not u.is_admin],
+            "groups": groups,
             "statuses": VALID_STATUSES,
-            "selected_kid_id": kid_id_int,
             "selected_status": status_filter,
+            "today": date.today().isoformat(),
         },
     )
 
