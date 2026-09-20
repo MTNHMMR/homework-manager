@@ -269,3 +269,25 @@ def test_overview_marks_overdue_in_progress_assignment_too(client, db):
     _login(client, "kid1")
     resp = client.get("/overview")
     assert 'class="overdue"' in resp.text
+
+
+def test_add_assignment_validation_error_does_not_crash_when_kid_has_existing_assignments(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_assignment(db, kid.id, "Math", "Existing Worksheet", "2026-09-25")
+    _login(client, "kid1")
+    resp = client.post(
+        "/overview/add", data={"subject": "Math", "title": "", "due_date": "2026-09-25"}
+    )
+    assert resp.status_code == 400
+    assert "text/html" in resp.headers["content-type"]
+    assert "required" in resp.text.lower()
+
+
+def test_overview_does_not_mark_assignment_due_today_as_overdue(client, db):
+    from datetime import date
+
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_assignment(db, kid.id, "Math", "Due Today HW", date.today().isoformat())
+    _login(client, "kid1")
+    resp = client.get("/overview")
+    assert 'class="overdue"' not in resp.text

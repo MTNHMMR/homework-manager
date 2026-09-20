@@ -38,11 +38,11 @@ def admin_dashboard(
     for a in assignments:
         assignments_by_kid_id.setdefault(a.user_id, []).append(a)
 
-    kids = [u for u in list_users(db) if not u.is_admin]
+    all_users = list_users(db)
     groups = [
-        (kid, assignments_by_kid_id[kid.id])
-        for kid in kids
-        if kid.id in assignments_by_kid_id
+        (user, assignments_by_kid_id[user.id])
+        for user in all_users
+        if user.id in assignments_by_kid_id
     ]
 
     return templates.TemplateResponse(

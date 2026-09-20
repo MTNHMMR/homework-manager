@@ -277,3 +277,21 @@ def test_admin_edit_rejects_subject_not_in_kids_active_class_list(client, db):
         },
     )
     assert resp.status_code == 400
+
+
+def test_admin_dashboard_shows_admin_owned_assignments_in_their_own_section(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Alice")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    create_assignment(db, kid1.id, "Math", "Alice Worksheet", "2026-09-25")
+    _login(client, "parent1")
+    # Parent logs an assignment for themself via their own overview page.
+    client.post(
+        "/overview/add",
+        data={"subject": "Errands", "title": "Buy poster board", "due_date": "2026-09-25"},
+    )
+
+    resp = client.get("/admin")
+    assert resp.status_code == 200
+    assert "Alice Worksheet" in resp.text
+    assert "Buy poster board" in resp.text
+    assert "Parent One" in resp.text
