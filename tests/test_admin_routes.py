@@ -1,6 +1,7 @@
 import pytest
 
 from app.assignments import create_assignment, get_assignment_by_id
+from app.classes import create_class
 from app.users import create_user
 
 
@@ -219,3 +220,31 @@ def test_admin_add_edit_with_missing_field_reenders_form_with_error(client, db):
     assert unchanged.title == "Worksheet"
     assert unchanged.due_date == "2026-09-25"
     assert unchanged.status == "not_started"
+
+
+def test_admin_edit_shows_dropdown_for_kid_with_active_classes(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    create_class(db, kid.id, "Math", period=1)
+    assignment = create_assignment(db, kid.id, "Math", "Worksheet", "2026-09-25")
+    _login(client, "parent1")
+    resp = client.get(f"/admin/{assignment.id}/edit")
+    assert '<select name="subject"' in resp.text
+
+
+def test_admin_edit_rejects_subject_not_in_kids_active_class_list(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    create_class(db, kid.id, "Math", period=1)
+    assignment = create_assignment(db, kid.id, "Math", "Worksheet", "2026-09-25")
+    _login(client, "parent1")
+    resp = client.post(
+        f"/admin/{assignment.id}/edit",
+        data={
+            "subject": "Gym",
+            "title": "Worksheet",
+            "due_date": "2026-09-25",
+            "status": "not_started",
+        },
+    )
+    assert resp.status_code == 400

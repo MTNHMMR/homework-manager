@@ -12,6 +12,7 @@ from app.assignments import (
     list_all_assignments,
     update_assignment,
 )
+from app.classes import list_active_classes_for_user
 from app.deps import get_db, require_admin
 from app.users import User, list_users
 
@@ -85,6 +86,7 @@ def admin_edit_form(
     assignment = get_assignment_by_id(db, assignment_id)
     if assignment is None:
         raise HTTPException(status_code=404, detail="Not found")
+    active_classes = list_active_classes_for_user(db, assignment.user_id)
     return templates.TemplateResponse(
         "admin_edit.html",
         {
@@ -92,6 +94,7 @@ def admin_edit_form(
             "user": admin,
             "assignment": assignment,
             "statuses": VALID_STATUSES,
+            "active_classes": active_classes,
             "form_subject": assignment.subject,
             "form_title": assignment.title,
             "form_due_date": assignment.due_date,
@@ -114,6 +117,7 @@ def admin_edit(
     assignment = get_assignment_by_id(db, assignment_id)
     if assignment is None:
         raise HTTPException(status_code=404, detail="Not found")
+    active_classes = list_active_classes_for_user(db, assignment.user_id)
     if not (subject and subject.strip()) or not (title and title.strip()) or not (
         due_date and due_date.strip()
     ):
@@ -124,10 +128,28 @@ def admin_edit(
                 "user": admin,
                 "assignment": assignment,
                 "statuses": VALID_STATUSES,
+                "active_classes": active_classes,
                 "error": "Subject, title, and due date are all required.",
                 "form_subject": subject or "",
                 "form_title": title or "",
                 "form_due_date": due_date or "",
+                "form_status": status or assignment.status,
+            },
+            status_code=400,
+        )
+    if active_classes and subject not in {c.name for c in active_classes}:
+        return templates.TemplateResponse(
+            "admin_edit.html",
+            {
+                "request": request,
+                "user": admin,
+                "assignment": assignment,
+                "statuses": VALID_STATUSES,
+                "active_classes": active_classes,
+                "error": "Please choose a subject from the list.",
+                "form_subject": subject,
+                "form_title": title,
+                "form_due_date": due_date,
                 "form_status": status or assignment.status,
             },
             status_code=400,
