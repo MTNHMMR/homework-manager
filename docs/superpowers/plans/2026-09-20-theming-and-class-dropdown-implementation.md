@@ -1989,7 +1989,7 @@ def test_seed_classes_is_idempotent(db_path, db, monkeypatch):
     assert len(classes) == 7
 
 
-def test_seed_classes_seeds_elizabeths_partial_list(db_path, db, monkeypatch):
+def test_seed_classes_seeds_elizabeths_full_list(db_path, db, monkeypatch):
     monkeypatch.setenv("HOMEWORK_DB_PATH", str(db_path))
     create_user(db, "eacain", "pw", "Elizabeth")
 
@@ -1998,7 +1998,16 @@ def test_seed_classes_seeds_elizabeths_partial_list(db_path, db, monkeypatch):
     elizabeth = get_user_by_username(db, "eacain")
     classes = list_classes_for_user(db, elizabeth.id)
     names = {c.name for c in classes}
-    assert names == {"Jazz Band", "Science", "Math"}
+    assert names == {
+        "Jazz Band",
+        "Science",
+        "American History",
+        "ELA",
+        "Athletic Fitness",
+        "Math",
+        "Choir",
+    }
+    assert len(classes) == 7
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -2043,7 +2052,11 @@ CLASS_LISTS = {
     "eacain": [
         (1, "Jazz Band", "Lamar"),
         (2, "Science", "Dugas"),
+        (3, "American History", None),
+        (4, "ELA", None),
+        (5, "Athletic Fitness", None),
         (6, "Math", "Campos"),
+        (7, "Choir", None),
     ],
 }
 
