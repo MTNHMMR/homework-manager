@@ -2,6 +2,7 @@ import sqlite3
 
 import pytest
 
+from app.theming import VALID_ACCENTS, VALID_THEMES
 from app.users import (
     create_user,
     get_user_by_id,
@@ -9,6 +10,7 @@ from app.users import (
     list_users,
     set_user_active,
     set_user_password,
+    set_user_theme,
 )
 from app.security import verify_password
 
@@ -68,3 +70,34 @@ def test_set_user_password_updates_hash(db):
     updated = get_user_by_id(db, user.id)
     assert verify_password("newpw", updated.password_hash)
     assert not verify_password("oldpw", updated.password_hash)
+
+
+def test_new_user_gets_default_theme_and_accent(db):
+    user = create_user(db, "kid1", "pw", "Kid One")
+    assert user.theme == "light"
+    assert user.accent_color == "blue"
+
+
+def test_set_user_theme_updates_theme_and_accent(db):
+    user = create_user(db, "kid1", "pw", "Kid One")
+    set_user_theme(db, user.id, "dark", "teal")
+    updated = get_user_by_id(db, user.id)
+    assert updated.theme == "dark"
+    assert updated.accent_color == "teal"
+
+
+def test_set_user_theme_rejects_invalid_theme(db):
+    user = create_user(db, "kid1", "pw", "Kid One")
+    with pytest.raises(ValueError):
+        set_user_theme(db, user.id, "neon", "blue")
+
+
+def test_set_user_theme_rejects_invalid_accent(db):
+    user = create_user(db, "kid1", "pw", "Kid One")
+    with pytest.raises(ValueError):
+        set_user_theme(db, user.id, "light", "chartreuse")
+
+
+def test_valid_themes_and_accents_constants():
+    assert VALID_THEMES == ("light", "dark", "fun", "minimal")
+    assert VALID_ACCENTS == ("red", "orange", "yellow", "green", "teal", "blue", "purple", "pink")

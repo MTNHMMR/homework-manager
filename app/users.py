@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from app.security import hash_password
+from app.theming import VALID_ACCENTS, VALID_THEMES
 
 
 @dataclass
@@ -13,6 +14,8 @@ class User:
     display_name: str
     is_admin: bool
     active: bool
+    theme: str
+    accent_color: str
 
 
 def _row_to_user(row: sqlite3.Row) -> User:
@@ -23,6 +26,8 @@ def _row_to_user(row: sqlite3.Row) -> User:
         display_name=row["display_name"],
         is_admin=bool(row["is_admin"]),
         active=bool(row["active"]),
+        theme=row["theme"],
+        accent_color=row["accent_color"],
     )
 
 
@@ -66,5 +71,19 @@ def set_user_password(conn: sqlite3.Connection, user_id: int, new_password: str)
     conn.execute(
         "UPDATE users SET password_hash = ? WHERE id = ?",
         (hash_password(new_password), user_id),
+    )
+    conn.commit()
+
+
+def set_user_theme(
+    conn: sqlite3.Connection, user_id: int, theme: str, accent_color: str
+) -> None:
+    if theme not in VALID_THEMES:
+        raise ValueError(f"invalid theme: {theme}")
+    if accent_color not in VALID_ACCENTS:
+        raise ValueError(f"invalid accent_color: {accent_color}")
+    conn.execute(
+        "UPDATE users SET theme = ?, accent_color = ? WHERE id = ?",
+        (theme, accent_color, user_id),
     )
     conn.commit()
