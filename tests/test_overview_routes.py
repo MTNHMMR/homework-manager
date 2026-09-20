@@ -237,3 +237,35 @@ def test_edit_rejects_subject_not_in_active_class_list(client, db):
         data={"subject": "Gym", "title": "Worksheet", "due_date": "2026-09-25"},
     )
     assert resp.status_code == 400
+
+
+def test_overview_marks_overdue_not_done_assignment_with_overdue_class(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_assignment(db, kid.id, "Math", "Overdue HW", "2020-01-01")
+    _login(client, "kid1")
+    resp = client.get("/overview")
+    assert 'class="overdue"' in resp.text
+
+
+def test_overview_does_not_mark_done_assignment_overdue(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_assignment(db, kid.id, "Math", "Finished HW", "2020-01-01", status="done")
+    _login(client, "kid1")
+    resp = client.get("/overview")
+    assert 'class="overdue"' not in resp.text
+
+
+def test_overview_does_not_mark_future_assignment_overdue(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_assignment(db, kid.id, "Math", "Future HW", "2099-01-01")
+    _login(client, "kid1")
+    resp = client.get("/overview")
+    assert 'class="overdue"' not in resp.text
+
+
+def test_overview_marks_overdue_in_progress_assignment_too(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_assignment(db, kid.id, "Math", "Started HW", "2020-01-01", status="in_progress")
+    _login(client, "kid1")
+    resp = client.get("/overview")
+    assert 'class="overdue"' in resp.text

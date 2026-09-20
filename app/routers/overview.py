@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import date
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
@@ -38,6 +39,7 @@ def overview(
             "assignments": assignments,
             "statuses": VALID_STATUSES,
             "active_classes": active_classes,
+            "today": date.today().isoformat(),
         },
     )
 

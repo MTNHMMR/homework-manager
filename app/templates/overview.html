@@ -9,7 +9,7 @@
     </thead>
     <tbody>
         {% for a in assignments %}
-        <tr>
+        <tr {% if a.due_date < today and a.status != 'done' %}class="overdue"{% endif %}>
             <td>{{ a.subject }}</td>
             <td>{{ a.title }}</td>
             <td>{{ a.due_date }}</td>
