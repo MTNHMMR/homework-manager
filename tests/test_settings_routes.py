@@ -16,7 +16,7 @@ def test_settings_page_shows_current_theme(client, db):
     _login(client, "kid1")
     resp = client.get("/settings")
     assert resp.status_code == 200
-    assert 'value="light" selected' in resp.text
+    assert 'name="theme" value="light" checked' in resp.text
 
 
 def test_settings_updates_theme_and_accent(client, db):

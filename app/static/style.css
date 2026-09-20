@@ -57,7 +57,28 @@ table { width: 100%; border-collapse: collapse; margin-top: 1rem; background: va
 th, td { text-align: left; padding: 0.5rem; border-bottom: 1px solid var(--border); }
 form.stack label { display: block; margin-bottom: 0.5rem; }
 .error { color: var(--error); }
-.status-done { color: var(--status-done); font-weight: bold; }
-.status-in_progress { color: var(--status-progress); }
-.status-not_started { color: var(--status-idle); }
+button[type="submit"] { background: var(--accent); color: var(--on-accent); border: none; padding: 0.4rem 0.9rem; cursor: pointer; font: inherit; }
+button[type="submit"]:hover { filter: brightness(0.92); }
+.status-done, .status-in_progress, .status-not_started { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 999px; }
+.status-done { color: var(--status-done); font-weight: bold; background: color-mix(in srgb, var(--status-done) 15%, transparent); }
+.status-in_progress { color: var(--status-progress); background: color-mix(in srgb, var(--status-progress) 15%, transparent); }
+.status-not_started { color: var(--status-idle); background: color-mix(in srgb, var(--status-idle) 12%, transparent); }
 button, select, input { border-radius: var(--radius); }
+
+fieldset { border: 1px solid var(--border); border-radius: var(--radius); padding: 0.75rem 1rem; margin-bottom: 1rem; }
+legend { padding: 0 0.4rem; font-weight: bold; }
+.theme-group { display: flex; gap: 1rem; flex-wrap: wrap; }
+.theme-option { display: flex; align-items: center; gap: 0.3rem; cursor: pointer; }
+.accent-group { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+.accent-swatch { position: relative; display: inline-block; width: 2rem; height: 2rem; }
+.accent-input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.accent-dot { display: block; width: 2rem; height: 2rem; border-radius: 50%; border: 2px solid transparent; box-sizing: border-box; }
+.accent-input:checked + .accent-dot { border-color: var(--text); box-shadow: 0 0 0 2px var(--card-bg); }
+.accent-red { background: #d64545; }
+.accent-orange { background: #b8631f; }
+.accent-yellow { background: #8a6d10; }
+.accent-green { background: #4a9d4f; }
+.accent-teal { background: #2e9d8f; }
+.accent-blue { background: #3a7bd5; }
+.accent-purple { background: #7b4fd6; }
+.accent-pink { background: #d6469b; }

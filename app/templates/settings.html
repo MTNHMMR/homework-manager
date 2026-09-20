@@ -4,20 +4,24 @@
 <h1>My settings</h1>
 {% if error %}<p class="error">{{ error }}</p>{% endif %}
 <form method="post" action="/settings" class="stack">
-    <label>Theme
-        <select name="theme">
-            {% for t in themes %}
-            <option value="{{ t }}" {% if t == user.theme %}selected{% endif %}>{{ t.title() }}</option>
-            {% endfor %}
-        </select>
-    </label>
-    <label>Accent color
-        <select name="accent_color">
-            {% for a in accents %}
-            <option value="{{ a }}" {% if a == user.accent_color %}selected{% endif %}>{{ a.title() }}</option>
-            {% endfor %}
-        </select>
-    </label>
+    <fieldset class="theme-group">
+        <legend>Theme</legend>
+        {% for t in themes %}
+        <label class="theme-option">
+            <input type="radio" name="theme" value="{{ t }}" {% if t == user.theme %}checked{% endif %}>
+            {{ t.title() }}
+        </label>
+        {% endfor %}
+    </fieldset>
+    <fieldset class="accent-group">
+        <legend>Accent color</legend>
+        {% for a in accents %}
+        <label class="accent-swatch">
+            <input type="radio" name="accent_color" value="{{ a }}" class="accent-input" {% if a == user.accent_color %}checked{% endif %}>
+            <span class="accent-dot accent-{{ a }}"></span>
+        </label>
+        {% endfor %}
+    </fieldset>
     <button type="submit">Save</button>
 </form>
 {% endblock %}
