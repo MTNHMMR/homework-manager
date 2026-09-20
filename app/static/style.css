@@ -59,10 +59,16 @@ form.stack label { display: block; margin-bottom: 0.5rem; }
 .error { color: var(--error); }
 main button[type="submit"] { background: var(--accent); color: var(--on-accent); border: none; padding: 0.4rem 0.9rem; cursor: pointer; font: inherit; }
 main button[type="submit"]:hover { filter: brightness(0.92); }
-.status-done, .status-in_progress, .status-not_started { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 999px; }
-.status-done { color: var(--status-done); font-weight: bold; background: color-mix(in srgb, var(--status-done) 15%, transparent); }
-.status-in_progress { color: var(--status-progress); background: color-mix(in srgb, var(--status-progress) 15%, transparent); }
-.status-not_started { color: var(--status-idle); background: color-mix(in srgb, var(--status-idle) 12%, transparent); }
+.status-done { color: var(--status-done); font-weight: bold; }
+.status-in_progress { color: var(--status-progress); }
+.status-not_started { color: var(--status-idle); }
+.status-done select, .status-in_progress select, .status-not_started select {
+    color: inherit;
+    font-weight: inherit;
+    border-radius: 999px;
+    padding: 0.15rem 0.6rem;
+    background: color-mix(in srgb, currentColor 15%, var(--card-bg));
+}
 button, select, input { border-radius: var(--radius); }
 
 fieldset { border: 1px solid var(--border); border-radius: var(--radius); padding: 0.75rem 1rem; margin-bottom: 1rem; }
