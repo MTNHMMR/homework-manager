@@ -23,13 +23,19 @@ router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
 
+def _visible_assignments(assignments: list[Assignment], today: str) -> list[Assignment]:
+    """Drop assignments marked done once their due date has arrived."""
+    return [a for a in assignments if not (a.status == "done" and a.due_date <= today)]
+
+
 @router.get("/overview", response_class=HTMLResponse)
 def overview(
     request: Request,
     user: User = Depends(require_user),
     db: sqlite3.Connection = Depends(get_db),
 ):
-    assignments = list_assignments_for_user(db, user.id)
+    today = date.today().isoformat()
+    assignments = _visible_assignments(list_assignments_for_user(db, user.id), today)
     active_classes = list_active_classes_for_user(db, user.id)
     return templates.TemplateResponse(
         "overview.html",
@@ -39,7 +45,7 @@ def overview(
             "assignments": assignments,
             "statuses": VALID_STATUSES,
             "active_classes": active_classes,
-            "today": date.today().isoformat(),
+            "today": today,
         },
     )
 
@@ -54,10 +60,11 @@ def add_assignment(
     db: sqlite3.Connection = Depends(get_db),
 ):
     active_classes = list_active_classes_for_user(db, user.id)
+    today = date.today().isoformat()
     if not (subject and subject.strip()) or not (title and title.strip()) or not (
         due_date and due_date.strip()
     ):
-        assignments = list_assignments_for_user(db, user.id)
+        assignments = _visible_assignments(list_assignments_for_user(db, user.id), today)
         return templates.TemplateResponse(
             "overview.html",
             {
@@ -66,7 +73,7 @@ def add_assignment(
                 "assignments": assignments,
                 "statuses": VALID_STATUSES,
                 "active_classes": active_classes,
-                "today": date.today().isoformat(),
+                "today": today,
                 "error": "Subject, title, and due date are all required.",
                 "form_subject": subject or "",
                 "form_title": title or "",
@@ -75,7 +82,7 @@ def add_assignment(
             status_code=400,
         )
     if active_classes and subject not in {c.name for c in active_classes}:
-        assignments = list_assignments_for_user(db, user.id)
+        assignments = _visible_assignments(list_assignments_for_user(db, user.id), today)
         return templates.TemplateResponse(
             "overview.html",
             {
@@ -84,7 +91,7 @@ def add_assignment(
                 "assignments": assignments,
                 "statuses": VALID_STATUSES,
                 "active_classes": active_classes,
-                "today": date.today().isoformat(),
+                "today": today,
                 "error": "Please choose a subject from the list.",
                 "form_subject": subject,
                 "form_title": title,

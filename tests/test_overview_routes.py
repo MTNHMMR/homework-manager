@@ -291,3 +291,38 @@ def test_overview_does_not_mark_assignment_due_today_as_overdue(client, db):
     _login(client, "kid1")
     resp = client.get("/overview")
     assert 'class="overdue"' not in resp.text
+
+
+def test_overview_hides_done_assignment_once_due_date_arrives(client, db):
+    from datetime import date
+
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_assignment(
+        db, kid.id, "Math", "Finished Past HW", "2020-01-01", status="done"
+    )
+    create_assignment(
+        db, kid.id, "Math", "Finished Today HW", date.today().isoformat(), status="done"
+    )
+    _login(client, "kid1")
+    resp = client.get("/overview")
+    assert "Finished Past HW" not in resp.text
+    assert "Finished Today HW" not in resp.text
+
+
+def test_overview_keeps_done_assignment_before_its_due_date(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_assignment(
+        db, kid.id, "Math", "Finished Early HW", "2099-01-01", status="done"
+    )
+    _login(client, "kid1")
+    resp = client.get("/overview")
+    assert "Finished Early HW" in resp.text
+
+
+def test_overview_keeps_not_done_assignment_past_due_date_and_turns_it_red(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_assignment(db, kid.id, "Math", "Still Overdue HW", "2020-01-01")
+    _login(client, "kid1")
+    resp = client.get("/overview")
+    assert "Still Overdue HW" in resp.text
+    assert 'class="overdue"' in resp.text

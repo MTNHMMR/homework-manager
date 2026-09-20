@@ -99,6 +99,26 @@ def test_admin_dashboard_does_not_mark_done_assignment_overdue(client, db):
     assert 'class="overdue"' not in resp.text
 
 
+def test_admin_dashboard_hides_done_assignment_once_due_date_arrives(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    create_assignment(db, kid1.id, "Math", "Finished Past HW", "2020-01-01", status="done")
+
+    _login(client, "parent1")
+    resp = client.get("/admin")
+    assert "Finished Past HW" not in resp.text
+
+
+def test_admin_dashboard_keeps_done_assignment_before_its_due_date(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    create_assignment(db, kid1.id, "Math", "Finished Early HW", "2099-01-01", status="done")
+
+    _login(client, "parent1")
+    resp = client.get("/admin")
+    assert "Finished Early HW" in resp.text
+
+
 def test_admin_dashboard_filters_by_status(client, db):
     kid1 = create_user(db, "kid1", "pw", "Kid One")
     create_user(db, "parent1", "pw", "Parent One", is_admin=True)

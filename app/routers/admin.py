@@ -28,7 +28,10 @@ def admin_dashboard(
     admin: User = Depends(require_admin),
     db: sqlite3.Connection = Depends(get_db),
 ):
-    assignments = list_all_assignments(db)
+    today = date.today().isoformat()
+    assignments = [
+        a for a in list_all_assignments(db) if not (a.status == "done" and a.due_date <= today)
+    ]
 
     status_filter = status if status else None
     if status_filter is not None:
@@ -53,7 +56,7 @@ def admin_dashboard(
             "groups": groups,
             "statuses": VALID_STATUSES,
             "selected_status": status_filter,
-            "today": date.today().isoformat(),
+            "today": today,
         },
     )
 
