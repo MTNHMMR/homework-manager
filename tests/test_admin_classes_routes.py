@@ -118,3 +118,36 @@ def test_admin_classes_mutation_routes_reject_non_admin(client, db):
     assert client.get(f"/admin/classes/{c.id}/edit").status_code == 403
     assert client.post(f"/admin/classes/{c.id}/edit", data={"name": "X"}).status_code == 403
     assert client.post(f"/admin/classes/{c.id}/delete").status_code == 403
+
+
+def test_add_class_rejects_blank_name(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    _login(client, "parent1")
+    resp = client.post(
+        "/admin/classes/add", data={"user_id": str(kid.id), "name": "   "}
+    )
+    assert resp.status_code == 400
+    from app.classes import list_classes_for_user
+
+    assert list_classes_for_user(db, kid.id) == []
+
+
+def test_edit_class_rejects_blank_name(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    c = create_class(db, kid.id, "Math", period=1)
+    _login(client, "parent1")
+    resp = client.post(f"/admin/classes/{c.id}/edit", data={"name": "   "})
+    assert resp.status_code == 400
+    from app.classes import get_class_by_id
+
+    unchanged = get_class_by_id(db, c.id)
+    assert unchanged.name == "Math"
+
+
+def test_add_class_404_for_nonexistent_user(client, db):
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    _login(client, "parent1")
+    resp = client.post("/admin/classes/add", data={"user_id": "999", "name": "Math"})
+    assert resp.status_code == 404

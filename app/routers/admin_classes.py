@@ -13,7 +13,7 @@ from app.classes import (
     update_class,
 )
 from app.deps import get_db, require_admin
-from app.users import User, list_users
+from app.users import User, get_user_by_id, list_users
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -32,6 +32,13 @@ def _clean_optional(value: Optional[str]) -> Optional[str]:
     if value is None or not value.strip():
         return None
     return value.strip()
+
+
+def _require_name(name: str) -> str:
+    cleaned = (name or "").strip()
+    if not cleaned:
+        raise HTTPException(status_code=400, detail="Class name is required")
+    return cleaned
 
 
 @router.get("/admin/classes", response_class=HTMLResponse)
@@ -63,6 +70,9 @@ def add_class(
     admin: User = Depends(require_admin),
     db: sqlite3.Connection = Depends(get_db),
 ):
+    if get_user_by_id(db, user_id) is None:
+        raise HTTPException(status_code=404, detail="Not found")
+    name = _require_name(name)
     create_class(
         db,
         user_id,
@@ -101,6 +111,7 @@ def edit_class(
 ):
     if get_class_by_id(db, class_id) is None:
         raise HTTPException(status_code=404, detail="Not found")
+    name = _require_name(name)
     update_class(
         db,
         class_id,
