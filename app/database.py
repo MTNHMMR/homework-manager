@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS assignments (
     title TEXT NOT NULL,
     due_date TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'not_started',
+    priority INTEGER NOT NULL DEFAULT 0,
+    completed_at TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -53,7 +55,19 @@ def _migrate_users_theme_columns(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
+def _migrate_assignments_priority_and_completed_columns(conn: sqlite3.Connection) -> None:
+    existing = {
+        row["name"] for row in conn.execute("PRAGMA table_info(assignments)").fetchall()
+    }
+    if "priority" not in existing:
+        conn.execute("ALTER TABLE assignments ADD COLUMN priority INTEGER NOT NULL DEFAULT 0")
+    if "completed_at" not in existing:
+        conn.execute("ALTER TABLE assignments ADD COLUMN completed_at TEXT")
+    conn.commit()
+
+
 def init_db(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA)
     conn.commit()
     _migrate_users_theme_columns(conn)
+    _migrate_assignments_priority_and_completed_columns(conn)
