@@ -420,3 +420,38 @@ def test_admin_dashboard_shows_kid_streak(client, db):
     _login(client, "parent1")
     resp = client.get("/admin")
     assert "1-day streak" in resp.text
+
+
+def test_admin_dashboard_hides_streaking_kid_under_status_filter(client, db):
+    from datetime import date, timedelta
+
+    kid1 = create_user(db, "kid1", "pw", "Streaky Kid")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    yesterday = (date.today() - timedelta(days=1)).isoformat()
+    completed = create_assignment(db, kid1.id, "Math", "Yesterday HW", yesterday, status="done")
+    db.execute(
+        "UPDATE assignments SET completed_at = ? WHERE id = ?",
+        (f"{yesterday} 10:00:00", completed.id),
+    )
+    # A currently-active assignment that won't match the status=done filter below,
+    # so this kid has a genuine positive streak but no assignment visible under the filter.
+    create_assignment(db, kid1.id, "Science", "Still Not Started", "2026-09-30")
+    db.commit()
+
+    _login(client, "parent1")
+    resp = client.get("/admin?status=done")
+    # Even though kid1's streak is nonzero, a status filter must still omit them
+    # entirely when nothing they have matches it — the streak fallback only
+    # applies to the unfiltered view.
+    assert "Streaky Kid" not in resp.text
+
+
+def test_admin_dashboard_hides_streak_badge_when_zero(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    create_assignment(db, kid1.id, "Math", "Pending HW", "2026-09-30")
+
+    _login(client, "parent1")
+    resp = client.get("/admin")
+    assert "Kid One" in resp.text
+    assert "day streak" not in resp.text

@@ -48,6 +48,11 @@ def admin_dashboard(
 
     all_users = list_users(db)
     kid_streaks = {user.id: compute_streak(db, user.id, today) for user in all_users}
+    # A kid with no currently-visible assignments (e.g. their only assignment is done
+    # and past due, so the filter above already dropped it) can still earn a heading
+    # so their streak badge shows — but only on the unfiltered view. Under a status
+    # filter, "no matching assignments" should still mean "omitted", so the fallback
+    # is disabled whenever status_filter is set.
     groups = [
         (user, assignments_by_kid_id.get(user.id, []))
         for user in all_users
