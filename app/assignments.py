@@ -101,3 +101,8 @@ def update_assignment(
 def delete_assignment(conn: sqlite3.Connection, assignment_id: int) -> None:
     conn.execute("DELETE FROM assignments WHERE id = ?", (assignment_id,))
     conn.commit()
+
+
+def sort_by_priority(assignments: list[Assignment]) -> list[Assignment]:
+    """Priority-flagged assignments first; stable sort preserves due-date order within each tier."""
+    return sorted(assignments, key=lambda a: not a.priority)

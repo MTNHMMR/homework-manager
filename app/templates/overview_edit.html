@@ -18,6 +18,7 @@
     </label>
     <label>Title <input type="text" name="title" value="{{ form_title or '' }}" required></label>
     <label>Due date <input type="date" name="due_date" value="{{ form_due_date or '' }}" required></label>
+    <label class="checkbox"><input type="checkbox" name="priority" value="1" {% if form_priority %}checked{% endif %}> Important</label>
     <button type="submit">Save</button>
 </form>
 {% endblock %}

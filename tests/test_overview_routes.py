@@ -1,4 +1,4 @@
-from app.assignments import create_assignment
+from app.assignments import create_assignment, get_assignment_by_id, list_assignments_for_user
 from app.classes import create_class
 from app.users import create_user
 
@@ -326,3 +326,55 @@ def test_overview_keeps_not_done_assignment_past_due_date_and_turns_it_red(clien
     resp = client.get("/overview")
     assert "Still Overdue HW" in resp.text
     assert 'class="overdue"' in resp.text
+
+
+def test_add_assignment_with_priority_checked_persists_it(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    _login(client, "kid1")
+    resp = client.post(
+        "/overview/add",
+        data={"subject": "Math", "title": "Big Test", "due_date": "2026-09-25", "priority": "1"},
+    )
+    assert resp.status_code == 303
+    assignments = list_assignments_for_user(db, kid.id)
+    assert assignments[0].priority is True
+
+
+def test_add_assignment_without_priority_defaults_false(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    _login(client, "kid1")
+    client.post(
+        "/overview/add",
+        data={"subject": "Math", "title": "Worksheet", "due_date": "2026-09-25"},
+    )
+    assignments = list_assignments_for_user(db, kid.id)
+    assert assignments[0].priority is False
+
+
+def test_overview_shows_priority_marker_for_flagged_assignment(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_assignment(db, kid.id, "Math", "Big Test", "2026-09-25", priority=True)
+    _login(client, "kid1")
+    resp = client.get("/overview")
+    assert 'class="priority-mark"' in resp.text
+
+
+def test_overview_sorts_priority_assignments_first(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_assignment(db, kid.id, "Math", "Sooner Regular", "2026-09-20")
+    create_assignment(db, kid.id, "Science", "Later Important", "2026-09-26", priority=True)
+    _login(client, "kid1")
+    resp = client.get("/overview")
+    assert resp.text.index("Later Important") < resp.text.index("Sooner Regular")
+
+
+def test_edit_assignment_can_toggle_priority(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    assignment = create_assignment(db, kid.id, "Math", "Worksheet", "2026-09-25")
+    _login(client, "kid1")
+    resp = client.post(
+        f"/overview/{assignment.id}/edit",
+        data={"subject": "Math", "title": "Worksheet", "due_date": "2026-09-25", "priority": "1"},
+    )
+    assert resp.status_code == 303
+    assert get_assignment_by_id(db, assignment.id).priority is True

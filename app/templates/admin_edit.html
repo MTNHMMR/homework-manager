@@ -25,6 +25,7 @@
             {% endfor %}
         </select>
     </label>
+    <label class="checkbox"><input type="checkbox" name="priority" value="1" {% if form_priority %}checked{% endif %}> Important</label>
     <button type="submit">Save</button>
 </form>
 {% endblock %}

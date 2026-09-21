@@ -63,6 +63,8 @@ main button[type="submit"]:hover { filter: brightness(0.92); }
 .status-in_progress { color: var(--status-progress); }
 .status-not_started { color: var(--status-idle); }
 tr.overdue { background: color-mix(in srgb, var(--error) 12%, var(--card-bg)); }
+.priority-mark { color: var(--accent); }
+label.checkbox { display: flex; align-items: center; gap: 0.4rem; }
 .status-done select, .status-in_progress select, .status-not_started select {
     color: inherit;
     font-weight: inherit;

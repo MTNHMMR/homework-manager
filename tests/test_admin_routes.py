@@ -315,3 +315,41 @@ def test_admin_dashboard_shows_admin_owned_assignments_in_their_own_section(clie
     assert "Alice Worksheet" in resp.text
     assert "Buy poster board" in resp.text
     assert "Parent One" in resp.text
+
+
+def test_admin_dashboard_shows_priority_marker(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    create_assignment(db, kid1.id, "Math", "Big Test", "2026-09-25", priority=True)
+    _login(client, "parent1")
+    resp = client.get("/admin")
+    assert 'class="priority-mark"' in resp.text
+
+
+def test_admin_dashboard_sorts_priority_assignments_first_within_kid(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    create_assignment(db, kid1.id, "Math", "Sooner Regular", "2026-09-20")
+    create_assignment(db, kid1.id, "Science", "Later Important", "2026-09-26", priority=True)
+    _login(client, "parent1")
+    resp = client.get("/admin")
+    assert resp.text.index("Later Important") < resp.text.index("Sooner Regular")
+
+
+def test_admin_edit_can_toggle_priority(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    assignment = create_assignment(db, kid1.id, "Math", "Worksheet", "2026-09-25")
+    _login(client, "parent1")
+    resp = client.post(
+        f"/admin/{assignment.id}/edit",
+        data={
+            "subject": "Math",
+            "title": "Worksheet",
+            "due_date": "2026-09-25",
+            "status": "not_started",
+            "priority": "1",
+        },
+    )
+    assert resp.status_code == 303
+    assert get_assignment_by_id(db, assignment.id).priority is True

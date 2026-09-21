@@ -13,6 +13,7 @@ from app.assignments import (
     delete_assignment,
     get_assignment_by_id,
     list_assignments_for_user,
+    sort_by_priority,
     update_assignment,
 )
 from app.classes import list_active_classes_for_user
@@ -35,7 +36,7 @@ def overview(
     db: sqlite3.Connection = Depends(get_db),
 ):
     today = date.today().isoformat()
-    assignments = _visible_assignments(list_assignments_for_user(db, user.id), today)
+    assignments = sort_by_priority(_visible_assignments(list_assignments_for_user(db, user.id), today))
     active_classes = list_active_classes_for_user(db, user.id)
     return templates.TemplateResponse(
         "overview.html",
@@ -56,6 +57,7 @@ def add_assignment(
     subject: Optional[str] = Form(None),
     title: Optional[str] = Form(None),
     due_date: Optional[str] = Form(None),
+    priority: Optional[str] = Form(None),
     user: User = Depends(require_user),
     db: sqlite3.Connection = Depends(get_db),
 ):
@@ -64,7 +66,7 @@ def add_assignment(
     if not (subject and subject.strip()) or not (title and title.strip()) or not (
         due_date and due_date.strip()
     ):
-        assignments = _visible_assignments(list_assignments_for_user(db, user.id), today)
+        assignments = sort_by_priority(_visible_assignments(list_assignments_for_user(db, user.id), today))
         return templates.TemplateResponse(
             "overview.html",
             {
@@ -78,11 +80,12 @@ def add_assignment(
                 "form_subject": subject or "",
                 "form_title": title or "",
                 "form_due_date": due_date or "",
+                "form_priority": bool(priority),
             },
             status_code=400,
         )
     if active_classes and subject not in {c.name for c in active_classes}:
-        assignments = _visible_assignments(list_assignments_for_user(db, user.id), today)
+        assignments = sort_by_priority(_visible_assignments(list_assignments_for_user(db, user.id), today))
         return templates.TemplateResponse(
             "overview.html",
             {
@@ -96,10 +99,11 @@ def add_assignment(
                 "form_subject": subject,
                 "form_title": title,
                 "form_due_date": due_date,
+                "form_priority": bool(priority),
             },
             status_code=400,
         )
-    create_assignment(db, user.id, subject, title, due_date)
+    create_assignment(db, user.id, subject, title, due_date, priority=bool(priority))
     return RedirectResponse("/overview", status_code=303)
 
 
@@ -153,6 +157,7 @@ def edit_assignment_form(
             "form_subject": assignment.subject,
             "form_title": assignment.title,
             "form_due_date": assignment.due_date,
+            "form_priority": assignment.priority,
         },
     )
 
@@ -164,6 +169,7 @@ def edit_assignment(
     subject: Optional[str] = Form(None),
     title: Optional[str] = Form(None),
     due_date: Optional[str] = Form(None),
+    priority: Optional[str] = Form(None),
     user: User = Depends(require_user),
     db: sqlite3.Connection = Depends(get_db),
 ):
@@ -183,6 +189,7 @@ def edit_assignment(
                 "form_subject": subject or "",
                 "form_title": title or "",
                 "form_due_date": due_date or "",
+                "form_priority": bool(priority),
             },
             status_code=400,
         )
@@ -198,10 +205,11 @@ def edit_assignment(
                 "form_subject": subject,
                 "form_title": title,
                 "form_due_date": due_date,
+                "form_priority": bool(priority),
             },
             status_code=400,
         )
-    update_assignment(db, assignment.id, subject, title, due_date, assignment.status, assignment.priority)
+    update_assignment(db, assignment.id, subject, title, due_date, assignment.status, bool(priority))
     return RedirectResponse("/overview", status_code=303)
 
 

@@ -11,6 +11,7 @@ from app.assignments import (
     delete_assignment,
     get_assignment_by_id,
     list_all_assignments,
+    sort_by_priority,
     update_assignment,
 )
 from app.classes import list_active_classes_for_user
@@ -36,6 +37,8 @@ def admin_dashboard(
     status_filter = status if status else None
     if status_filter is not None:
         assignments = [a for a in assignments if a.status == status_filter]
+
+    assignments = sort_by_priority(assignments)
 
     assignments_by_kid_id: dict[int, list] = {}
     for a in assignments:
@@ -108,6 +111,7 @@ def admin_edit_form(
             "form_title": assignment.title,
             "form_due_date": assignment.due_date,
             "form_status": assignment.status,
+            "form_priority": assignment.priority,
         },
     )
 
@@ -120,6 +124,7 @@ def admin_edit(
     title: Optional[str] = Form(None),
     due_date: Optional[str] = Form(None),
     status: Optional[str] = Form(None),
+    priority: Optional[str] = Form(None),
     admin: User = Depends(require_admin),
     db: sqlite3.Connection = Depends(get_db),
 ):
@@ -143,6 +148,7 @@ def admin_edit(
                 "form_title": title or "",
                 "form_due_date": due_date or "",
                 "form_status": status or assignment.status,
+                "form_priority": bool(priority),
             },
             status_code=400,
         )
@@ -160,12 +166,13 @@ def admin_edit(
                 "form_title": title,
                 "form_due_date": due_date,
                 "form_status": status or assignment.status,
+                "form_priority": bool(priority),
             },
             status_code=400,
         )
     if status not in VALID_STATUSES:
         raise HTTPException(status_code=400, detail="Invalid status")
-    update_assignment(db, assignment.id, subject, title, due_date, status, assignment.priority)
+    update_assignment(db, assignment.id, subject, title, due_date, status, bool(priority))
     return RedirectResponse("/admin", status_code=303)
 
 

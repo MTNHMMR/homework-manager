@@ -24,7 +24,7 @@
         {% for a in kid_assignments %}
         <tr {% if a.due_date < today and a.status != 'done' %}class="overdue"{% endif %}>
             <td>{{ a.subject }}</td>
-            <td>{{ a.title }}</td>
+            <td>{% if a.priority %}<span class="priority-mark" title="Important">★</span> {% endif %}{{ a.title }}</td>
             <td>{{ a.due_date }}</td>
             <td class="status-{{ a.status }}">
                 <form method="post" action="/admin/{{ a.id }}/status" class="inline">
