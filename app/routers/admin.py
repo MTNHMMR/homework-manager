@@ -8,6 +8,7 @@ from fastapi.templating import Jinja2Templates
 
 from app.assignments import (
     VALID_STATUSES,
+    compute_streak,
     delete_assignment,
     get_assignment_by_id,
     list_all_assignments,
@@ -46,10 +47,12 @@ def admin_dashboard(
         assignments_by_kid_id.setdefault(a.user_id, []).append(a)
 
     all_users = list_users(db)
+    kid_streaks = {user.id: compute_streak(db, user.id, today) for user in all_users}
     groups = [
-        (user, assignments_by_kid_id[user.id])
+        (user, assignments_by_kid_id.get(user.id, []))
         for user in all_users
         if user.id in assignments_by_kid_id
+        or (status_filter is None and kid_streaks[user.id] > 0)
     ]
 
     return templates.TemplateResponse(
@@ -58,6 +61,7 @@ def admin_dashboard(
             "request": request,
             "user": admin,
             "groups": groups,
+            "kid_streaks": kid_streaks,
             "statuses": VALID_STATUSES,
             "selected_status": status_filter,
             "today": today,

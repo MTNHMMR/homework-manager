@@ -2,6 +2,7 @@ import pytest
 
 from app.assignments import (
     VALID_STATUSES,
+    compute_streak,
     create_assignment,
     delete_assignment,
     get_assignment_by_id,
@@ -137,3 +138,55 @@ def test_update_assignment_persists_priority(db, make_user):
     created = create_assignment(db, kid.id, "Math", "Worksheet", "2026-09-25")
     update_assignment(db, created.id, "Math", "Worksheet", "2026-09-25", "not_started", True)
     assert get_assignment_by_id(db, created.id).priority is True
+
+
+def test_compute_streak_zero_with_no_assignments(db, make_user):
+    kid = make_user("kid1")
+    assert compute_streak(db, kid.id, "2026-09-20") == 0
+
+
+def test_compute_streak_counts_consecutive_on_time_days(db, make_user):
+    kid = make_user("kid1")
+    a1 = create_assignment(db, kid.id, "Math", "Day1", "2026-09-18", status="done")
+    a2 = create_assignment(db, kid.id, "Math", "Day2", "2026-09-19", status="done")
+    db.execute("UPDATE assignments SET completed_at = ? WHERE id = ?", ("2026-09-18 10:00:00", a1.id))
+    db.execute("UPDATE assignments SET completed_at = ? WHERE id = ?", ("2026-09-19 10:00:00", a2.id))
+    db.commit()
+    assert compute_streak(db, kid.id, "2026-09-20") == 2
+
+
+def test_compute_streak_stops_at_first_missed_day(db, make_user):
+    kid = make_user("kid1")
+    a1 = create_assignment(db, kid.id, "Math", "Day1", "2026-09-19", status="done")
+    create_assignment(db, kid.id, "Math", "Day2 Not Done", "2026-09-18")
+    db.execute("UPDATE assignments SET completed_at = ? WHERE id = ?", ("2026-09-19 10:00:00", a1.id))
+    db.commit()
+    assert compute_streak(db, kid.id, "2026-09-20") == 1
+
+
+def test_compute_streak_skips_days_with_no_assignments(db, make_user):
+    kid = make_user("kid1")
+    a1 = create_assignment(db, kid.id, "Math", "Day1", "2026-09-19", status="done")
+    a2 = create_assignment(db, kid.id, "Math", "Day3", "2026-09-17", status="done")
+    db.execute("UPDATE assignments SET completed_at = ? WHERE id = ?", ("2026-09-19 10:00:00", a1.id))
+    db.execute("UPDATE assignments SET completed_at = ? WHERE id = ?", ("2026-09-17 10:00:00", a2.id))
+    db.commit()
+    # 2026-09-18 has no assignments due at all, so it's skipped rather than breaking the streak
+    assert compute_streak(db, kid.id, "2026-09-20") == 2
+
+
+def test_compute_streak_breaks_on_late_completion(db, make_user):
+    kid = make_user("kid1")
+    a1 = create_assignment(db, kid.id, "Math", "Day1", "2026-09-18", status="done")
+    db.execute("UPDATE assignments SET completed_at = ? WHERE id = ?", ("2026-09-19 10:00:00", a1.id))
+    db.commit()
+    assert compute_streak(db, kid.id, "2026-09-20") == 0
+
+
+def test_compute_streak_ignores_assignments_due_today(db, make_user):
+    kid = make_user("kid1")
+    create_assignment(db, kid.id, "Math", "Due Today Not Done", "2026-09-20")
+    a1 = create_assignment(db, kid.id, "Math", "Day1", "2026-09-19", status="done")
+    db.execute("UPDATE assignments SET completed_at = ? WHERE id = ?", ("2026-09-19 10:00:00", a1.id))
+    db.commit()
+    assert compute_streak(db, kid.id, "2026-09-20") == 1

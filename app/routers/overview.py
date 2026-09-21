@@ -9,6 +9,7 @@ from fastapi.templating import Jinja2Templates
 from app.assignments import (
     VALID_STATUSES,
     Assignment,
+    compute_streak,
     create_assignment,
     delete_assignment,
     get_assignment_by_id,
@@ -48,6 +49,7 @@ def overview(
             "statuses": VALID_STATUSES,
             "active_classes": active_classes,
             "today": today,
+            "streak": compute_streak(db, user.id, today),
         },
     )
 

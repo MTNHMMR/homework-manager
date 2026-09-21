@@ -418,3 +418,26 @@ def test_overview_history_has_edit_link(client, db):
     _login(client, "kid1")
     resp = client.get("/overview/history")
     assert f'/overview/{assignment.id}/edit' in resp.text
+
+
+def test_overview_shows_streak_when_positive(client, db):
+    from datetime import date, timedelta
+
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    yesterday = (date.today() - timedelta(days=1)).isoformat()
+    assignment = create_assignment(db, kid.id, "Math", "Yesterday HW", yesterday, status="done")
+    db.execute(
+        "UPDATE assignments SET completed_at = ? WHERE id = ?",
+        (f"{yesterday} 10:00:00", assignment.id),
+    )
+    db.commit()
+    _login(client, "kid1")
+    resp = client.get("/overview")
+    assert "1-day streak" in resp.text
+
+
+def test_overview_hides_streak_when_zero(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    _login(client, "kid1")
+    resp = client.get("/overview")
+    assert "day streak" not in resp.text

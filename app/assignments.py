@@ -1,5 +1,6 @@
 import sqlite3
 from dataclasses import dataclass
+from datetime import date, timedelta
 from typing import Optional
 
 VALID_STATUSES = ("not_started", "in_progress", "done")
@@ -122,3 +123,34 @@ def list_all_completed_assignments(conn: sqlite3.Connection) -> list[Assignment]
         "SELECT * FROM assignments WHERE status = 'done' ORDER BY completed_at DESC"
     ).fetchall()
     return [_row_to_assignment(row) for row in rows]
+
+
+def compute_streak(conn: sqlite3.Connection, user_id: int, today: str) -> int:
+    """On-time streak: consecutive days walking backward from yesterday where every
+    assignment due that day was completed by end of that day. A day with nothing due
+    is skipped, not counted as a break."""
+    earliest_row = conn.execute(
+        "SELECT MIN(due_date) AS earliest FROM assignments WHERE user_id = ?", (user_id,)
+    ).fetchone()
+    if earliest_row["earliest"] is None:
+        return 0
+    earliest = date.fromisoformat(earliest_row["earliest"])
+    day = date.fromisoformat(today) - timedelta(days=1)
+
+    streak = 0
+    while day >= earliest:
+        day_str = day.isoformat()
+        rows = conn.execute(
+            "SELECT completed_at FROM assignments WHERE user_id = ? AND due_date = ?",
+            (user_id, day_str),
+        ).fetchall()
+        if rows:
+            all_on_time = all(
+                row["completed_at"] is not None and row["completed_at"][:10] <= day_str
+                for row in rows
+            )
+            if not all_on_time:
+                break
+            streak += 1
+        day -= timedelta(days=1)
+    return streak

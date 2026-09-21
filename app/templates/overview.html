@@ -2,6 +2,7 @@
 {% block title %}My Assignments — Homework Manager{% endblock %}
 {% block content %}
 <h1>My assignments</h1>
+{% if streak %}<p class="streak">🔥 {{ streak }}-day streak</p>{% endif %}
 
 <table>
     <thead>

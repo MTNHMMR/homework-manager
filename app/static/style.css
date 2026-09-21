@@ -91,3 +91,4 @@ legend { padding: 0 0.4rem; font-weight: bold; }
 .accent-blue { background: #3a7bd5; }
 .accent-purple { background: #7b4fd6; }
 .accent-pink { background: #d6469b; }
+.streak { color: var(--accent); font-weight: bold; }

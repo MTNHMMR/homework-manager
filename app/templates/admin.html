@@ -15,7 +15,7 @@
 </form>
 
 {% for kid, kid_assignments in groups %}
-<h2>{{ kid.display_name }}</h2>
+<h2>{{ kid.display_name }}{% if kid_streaks[kid.id] %} <span class="streak">🔥 {{ kid_streaks[kid.id] }}-day streak</span>{% endif %}</h2>
 <table>
     <thead>
         <tr><th>Subject</th><th>Title</th><th>Due</th><th>Status</th><th></th><th></th></tr>

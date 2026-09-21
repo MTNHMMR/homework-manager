@@ -403,3 +403,20 @@ def test_admin_history_omits_kid_with_no_completed_assignments(client, db):
     resp = client.get("/admin/history")
     assert "Alice" in resp.text
     assert "Bob" not in resp.text
+
+
+def test_admin_dashboard_shows_kid_streak(client, db):
+    from datetime import date, timedelta
+
+    kid1 = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    yesterday = (date.today() - timedelta(days=1)).isoformat()
+    assignment = create_assignment(db, kid1.id, "Math", "Yesterday HW", yesterday, status="done")
+    db.execute(
+        "UPDATE assignments SET completed_at = ? WHERE id = ?",
+        (f"{yesterday} 10:00:00", assignment.id),
+    )
+    db.commit()
+    _login(client, "parent1")
+    resp = client.get("/admin")
+    assert "1-day streak" in resp.text
