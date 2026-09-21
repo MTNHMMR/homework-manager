@@ -480,3 +480,93 @@ def test_overview_week_navigation_moves_the_window(client, db):
     assert "Next Week HW" not in resp.text
     resp2 = client.get(f"/overview?view=week&week={next_week_start.isoformat()}")
     assert "Next Week HW" in resp2.text
+
+
+def test_marking_done_through_the_route_counts_toward_streak(client, db):
+    """Regression test for the UTC/local timezone mismatch: completed_at must be
+    stamped in local time (matching date.today()) or a same-day completion marked
+    through the real route won't register as on-time. Writing completed_at by hand
+    via raw SQL (as other streak tests do) would not have caught this bug.
+
+    Can't travel forward in real time in a test, so: mark an assignment due *today*
+    done right now through the real HTTP route (stamping completed_at as local "now"),
+    then ask compute_streak what the streak looks like "as of tomorrow" — that only
+    counts today's completion as on-time if completed_at's calendar date truly
+    matches date.today(), which is exactly what the UTC bug broke in the evening.
+    """
+    from datetime import date, timedelta
+
+    from app.assignments import compute_streak
+
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    today = date.today().isoformat()
+    assignment = create_assignment(db, kid.id, "Math", "Today HW", today)
+    _login(client, "kid1")
+
+    resp = client.post(f"/overview/{assignment.id}/status", data={"status": "done"})
+    assert resp.status_code == 303
+
+    tomorrow = (date.today() + timedelta(days=1)).isoformat()
+    assert compute_streak(db, kid.id, tomorrow) == 1
+
+
+def test_overview_week_view_survives_malformed_week_param(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_assignment(db, kid.id, "Math", "Worksheet", "2026-09-25")
+    _login(client, "kid1")
+    resp = client.get("/overview?view=week&week=not-a-date")
+    assert resp.status_code == 200
+    assert "week-grid" in resp.text
+
+
+def test_overview_week_view_excludes_done_and_past_due_assignment(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_assignment(
+        db, kid.id, "Math", "Finished Past HW", "2020-01-01", status="done"
+    )
+    _login(client, "kid1")
+    resp = client.get("/overview?view=week")
+    assert "Finished Past HW" not in resp.text
+
+
+def test_overview_history_shows_priority_marker(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_assignment(
+        db, kid.id, "Math", "Big Test", "2020-01-01", status="done", priority=True
+    )
+    _login(client, "kid1")
+    resp = client.get("/overview/history")
+    assert 'class="priority-mark"' in resp.text
+
+
+def test_overview_week_view_shows_priority_marker(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_assignment(db, kid.id, "Math", "Big Test", "2026-09-25", priority=True)
+    _login(client, "kid1")
+    resp = client.get("/overview?view=week")
+    assert 'class="priority-mark"' in resp.text
+
+
+def test_overview_history_shows_dash_for_missing_completed_at(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    assignment = create_assignment(
+        db, kid.id, "Math", "Old Finished HW", "2020-01-01", status="done"
+    )
+    db.execute(
+        "UPDATE assignments SET completed_at = NULL WHERE id = ?", (assignment.id,)
+    )
+    db.commit()
+    _login(client, "kid1")
+    resp = client.get("/overview/history")
+    assert "Old Finished HW" in resp.text
+    assert "Completed before this app tracked completion dates" in resp.text
+
+
+def test_overview_history_still_shows_real_completed_at(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_assignment(
+        db, kid.id, "Math", "Recently Finished HW", "2020-01-01", status="done"
+    )
+    _login(client, "kid1")
+    resp = client.get("/overview/history")
+    assert "Completed before this app tracked completion dates" not in resp.text

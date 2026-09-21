@@ -13,7 +13,7 @@
             <td>{{ a.subject }}</td>
             <td>{% if a.priority %}<span class="priority-mark" title="Important">★</span> {% endif %}{{ a.title }}</td>
             <td>{{ a.due_date }}</td>
-            <td>{{ a.completed_at }}</td>
+            <td>{% if a.completed_at %}{{ a.completed_at }}{% else %}<span title="Completed before this app tracked completion dates">—</span>{% endif %}</td>
             <td><a href="/overview/{{ a.id }}/edit">Edit</a></td>
         </tr>
         {% else %}

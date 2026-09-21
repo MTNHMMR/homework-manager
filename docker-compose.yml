@@ -10,6 +10,7 @@ services:
       ADMIN_USERNAME: ${ADMIN_USERNAME}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       ADMIN_DISPLAY_NAME: ${ADMIN_DISPLAY_NAME:-Admin}
+      TZ: America/Chicago
     restart: unless-stopped
 
 volumes:

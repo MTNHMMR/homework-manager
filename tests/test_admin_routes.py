@@ -480,3 +480,87 @@ def test_admin_dashboard_week_view_shows_assignment_under_correct_day(client, db
     assert resp.status_code == 200
     assert "week-grid" in resp.text
     assert "Wednesday HW" in resp.text
+
+
+def test_admin_history_shows_kid_streak(client, db):
+    from datetime import date, timedelta
+
+    kid1 = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    yesterday = (date.today() - timedelta(days=1)).isoformat()
+    assignment = create_assignment(db, kid1.id, "Math", "Yesterday HW", yesterday, status="done")
+    db.execute(
+        "UPDATE assignments SET completed_at = ? WHERE id = ?",
+        (f"{yesterday} 10:00:00", assignment.id),
+    )
+    db.commit()
+    _login(client, "parent1")
+    resp = client.get("/admin/history")
+    assert "1-day streak" in resp.text
+
+
+def test_admin_dashboard_week_view_survives_malformed_week_param(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    create_assignment(db, kid1.id, "Math", "Worksheet", "2026-09-25")
+    _login(client, "parent1")
+    resp = client.get("/admin?view=week&week=garbage")
+    assert resp.status_code == 200
+    assert "week-grid" in resp.text
+
+
+def test_admin_dashboard_week_view_excludes_done_and_past_due_assignment(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    create_assignment(db, kid1.id, "Math", "Finished Past HW", "2020-01-01", status="done")
+    _login(client, "parent1")
+    resp = client.get("/admin?view=week")
+    assert "Finished Past HW" not in resp.text
+
+
+def test_admin_history_shows_priority_marker(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    create_assignment(db, kid1.id, "Math", "Big Test", "2020-01-01", status="done", priority=True)
+    _login(client, "parent1")
+    resp = client.get("/admin/history")
+    assert 'class="priority-mark"' in resp.text
+
+
+def test_admin_dashboard_week_view_shows_priority_marker(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    create_assignment(db, kid1.id, "Math", "Big Test", "2026-09-25", priority=True)
+    _login(client, "parent1")
+    resp = client.get("/admin?view=week")
+    assert 'class="priority-mark"' in resp.text
+
+
+def test_admin_history_shows_dash_for_missing_completed_at(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    assignment = create_assignment(
+        db, kid1.id, "Math", "Old Finished HW", "2020-01-01", status="done"
+    )
+    db.execute(
+        "UPDATE assignments SET completed_at = NULL WHERE id = ?", (assignment.id,)
+    )
+    db.commit()
+    _login(client, "parent1")
+    resp = client.get("/admin/history")
+    assert "Old Finished HW" in resp.text
+    assert "Completed before this app tracked completion dates" in resp.text
+
+
+def test_admin_dashboard_week_navigation_preserves_status_filter(client, db):
+    from datetime import date, timedelta
+
+    kid1 = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    create_assignment(db, kid1.id, "Math", "Done One", "2026-09-25", status="done")
+    _login(client, "parent1")
+    week_start = date.today() - timedelta(days=(date.today().weekday() + 1) % 7)
+    resp = client.get(f"/admin?status=done&view=week&week={week_start.isoformat()}")
+    assert resp.status_code == 200
+    assert 'value="done" selected' in resp.text
+    assert "status=done" in resp.text

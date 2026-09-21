@@ -1,9 +1,21 @@
 from datetime import date, timedelta
+from typing import Optional
 
 
 def current_week_start(today: date) -> date:
     """Sunday of the week containing `today`."""
     return today - timedelta(days=(today.weekday() + 1) % 7)
+
+
+def parse_week_start(week: Optional[str], today: date) -> date:
+    """Parse a `?week=` query value, falling back to the current week start
+    when it's missing or malformed (rather than raising)."""
+    if week:
+        try:
+            return date.fromisoformat(week)
+        except ValueError:
+            pass
+    return current_week_start(today)
 
 
 def week_dates(week_start: date) -> list[date]:

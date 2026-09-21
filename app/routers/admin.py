@@ -19,7 +19,7 @@ from app.assignments import (
 from app.classes import list_active_classes_for_user
 from app.deps import get_db, require_admin
 from app.users import User, list_users
-from app.weeks import current_week_start, group_assignments_by_day, week_dates
+from app.weeks import group_assignments_by_day, parse_week_start, week_dates
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -63,7 +63,7 @@ def admin_dashboard(
         or (status_filter is None and kid_streaks[user.id] > 0)
     ]
 
-    week_start_date = date.fromisoformat(week) if week else current_week_start(date.today())
+    week_start_date = parse_week_start(week, date.today())
     dates = week_dates(week_start_date)
     week_groups = [
         (user, group_assignments_by_day(kid_assignments, dates))
@@ -96,6 +96,7 @@ def admin_history(
     admin: User = Depends(require_admin),
     db: sqlite3.Connection = Depends(get_db),
 ):
+    today = date.today().isoformat()
     completed = list_all_completed_assignments(db)
 
     completed_by_kid_id: dict[int, list] = {}
@@ -103,6 +104,7 @@ def admin_history(
         completed_by_kid_id.setdefault(a.user_id, []).append(a)
 
     all_users = list_users(db)
+    kid_streaks = {user.id: compute_streak(db, user.id, today) for user in all_users}
     groups = [
         (user, completed_by_kid_id[user.id])
         for user in all_users
@@ -115,6 +117,7 @@ def admin_history(
             "request": request,
             "user": admin,
             "groups": groups,
+            "kid_streaks": kid_streaks,
         },
     )
 

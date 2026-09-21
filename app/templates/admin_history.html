@@ -4,7 +4,7 @@
 <h1>Completed work</h1>
 
 {% for kid, kid_completed in groups %}
-<h2>{{ kid.display_name }}</h2>
+<h2>{{ kid.display_name }}{% if kid_streaks[kid.id] %} <span class="streak">🔥 {{ kid_streaks[kid.id] }}-day streak</span>{% endif %}</h2>
 <table>
     <thead>
         <tr><th>Subject</th><th>Title</th><th>Due</th><th>Completed</th><th></th></tr>
@@ -15,7 +15,7 @@
             <td>{{ a.subject }}</td>
             <td>{% if a.priority %}<span class="priority-mark" title="Important">★</span> {% endif %}{{ a.title }}</td>
             <td>{{ a.due_date }}</td>
-            <td>{{ a.completed_at }}</td>
+            <td>{% if a.completed_at %}{{ a.completed_at }}{% else %}<span title="Completed before this app tracked completion dates">—</span>{% endif %}</td>
             <td><a href="/admin/{{ a.id }}/edit">Edit</a></td>
         </tr>
         {% endfor %}

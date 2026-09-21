@@ -32,7 +32,7 @@ def _row_to_assignment(row: sqlite3.Row) -> Assignment:
 
 
 def _now(conn: sqlite3.Connection) -> str:
-    return conn.execute("SELECT datetime('now')").fetchone()[0]
+    return conn.execute("SELECT datetime('now', 'localtime')").fetchone()[0]
 
 
 def create_assignment(
