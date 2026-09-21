@@ -11,6 +11,7 @@ from app.assignments import (
     delete_assignment,
     get_assignment_by_id,
     list_all_assignments,
+    list_all_completed_assignments,
     sort_by_priority,
     update_assignment,
 )
@@ -60,6 +61,35 @@ def admin_dashboard(
             "statuses": VALID_STATUSES,
             "selected_status": status_filter,
             "today": today,
+        },
+    )
+
+
+@router.get("/admin/history", response_class=HTMLResponse)
+def admin_history(
+    request: Request,
+    admin: User = Depends(require_admin),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    completed = list_all_completed_assignments(db)
+
+    completed_by_kid_id: dict[int, list] = {}
+    for a in completed:
+        completed_by_kid_id.setdefault(a.user_id, []).append(a)
+
+    all_users = list_users(db)
+    groups = [
+        (user, completed_by_kid_id[user.id])
+        for user in all_users
+        if user.id in completed_by_kid_id
+    ]
+
+    return templates.TemplateResponse(
+        "admin_history.html",
+        {
+            "request": request,
+            "user": admin,
+            "groups": groups,
         },
     )
 

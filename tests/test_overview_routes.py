@@ -378,3 +378,43 @@ def test_edit_assignment_can_toggle_priority(client, db):
     )
     assert resp.status_code == 303
     assert get_assignment_by_id(db, assignment.id).priority is True
+
+
+def test_overview_history_requires_login(client):
+    resp = client.get("/overview/history")
+    assert resp.status_code == 303
+    assert resp.headers["location"] == "/login"
+
+
+def test_overview_history_shows_own_completed_assignments(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_assignment(db, kid.id, "Math", "Finished HW", "2020-01-01", status="done")
+    _login(client, "kid1")
+    resp = client.get("/overview/history")
+    assert resp.status_code == 200
+    assert "Finished HW" in resp.text
+
+
+def test_overview_history_excludes_not_done_assignments(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_assignment(db, kid.id, "Math", "Still Working HW", "2026-09-25")
+    _login(client, "kid1")
+    resp = client.get("/overview/history")
+    assert "Still Working HW" not in resp.text
+
+
+def test_overview_history_excludes_other_kids_completed_assignments(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Kid One")
+    kid2 = create_user(db, "kid2", "pw", "Kid Two")
+    create_assignment(db, kid2.id, "Math", "Other Kid HW", "2020-01-01", status="done")
+    _login(client, "kid1")
+    resp = client.get("/overview/history")
+    assert "Other Kid HW" not in resp.text
+
+
+def test_overview_history_has_edit_link(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    assignment = create_assignment(db, kid.id, "Math", "Finished HW", "2020-01-01", status="done")
+    _login(client, "kid1")
+    resp = client.get("/overview/history")
+    assert f'/overview/{assignment.id}/edit' in resp.text

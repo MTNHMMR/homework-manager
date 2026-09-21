@@ -353,3 +353,53 @@ def test_admin_edit_can_toggle_priority(client, db):
     )
     assert resp.status_code == 303
     assert get_assignment_by_id(db, assignment.id).priority is True
+
+
+def test_admin_history_requires_admin(client, db):
+    create_user(db, "kid1", "pw", "Kid One")
+    _login(client, "kid1")
+    resp = client.get("/admin/history")
+    assert resp.status_code == 403
+
+
+def test_admin_history_requires_login(client):
+    resp = client.get("/admin/history")
+    assert resp.status_code == 303
+    assert resp.headers["location"] == "/login"
+
+
+def test_admin_history_shows_all_kids_completed_assignments_grouped(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Alice")
+    kid2 = create_user(db, "kid2", "pw", "Bob")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    create_assignment(db, kid1.id, "Math", "Alice Finished", "2020-01-01", status="done")
+    create_assignment(db, kid2.id, "Science", "Bob Finished", "2020-01-02", status="done")
+
+    _login(client, "parent1")
+    resp = client.get("/admin/history")
+    assert resp.status_code == 200
+    assert "Alice Finished" in resp.text
+    assert "Bob Finished" in resp.text
+
+
+def test_admin_history_excludes_not_done_assignments(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    create_assignment(db, kid1.id, "Math", "Still Working HW", "2026-09-25")
+
+    _login(client, "parent1")
+    resp = client.get("/admin/history")
+    assert "Still Working HW" not in resp.text
+
+
+def test_admin_history_omits_kid_with_no_completed_assignments(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Alice")
+    kid2 = create_user(db, "kid2", "pw", "Bob")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    create_assignment(db, kid1.id, "Math", "Alice Finished", "2020-01-01", status="done")
+    create_assignment(db, kid2.id, "Science", "Bob Not Done", "2026-09-25")
+
+    _login(client, "parent1")
+    resp = client.get("/admin/history")
+    assert "Alice" in resp.text
+    assert "Bob" not in resp.text

@@ -13,6 +13,7 @@ from app.assignments import (
     delete_assignment,
     get_assignment_by_id,
     list_assignments_for_user,
+    list_completed_assignments_for_user,
     sort_by_priority,
     update_assignment,
 )
@@ -47,6 +48,23 @@ def overview(
             "statuses": VALID_STATUSES,
             "active_classes": active_classes,
             "today": today,
+        },
+    )
+
+
+@router.get("/overview/history", response_class=HTMLResponse)
+def overview_history(
+    request: Request,
+    user: User = Depends(require_user),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    completed = list_completed_assignments_for_user(db, user.id)
+    return templates.TemplateResponse(
+        "overview_history.html",
+        {
+            "request": request,
+            "user": user,
+            "completed": completed,
         },
     )
 

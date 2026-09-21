@@ -106,3 +106,19 @@ def delete_assignment(conn: sqlite3.Connection, assignment_id: int) -> None:
 def sort_by_priority(assignments: list[Assignment]) -> list[Assignment]:
     """Priority-flagged assignments first; stable sort preserves due-date order within each tier."""
     return sorted(assignments, key=lambda a: not a.priority)
+
+
+def list_completed_assignments_for_user(conn: sqlite3.Connection, user_id: int) -> list[Assignment]:
+    rows = conn.execute(
+        "SELECT * FROM assignments WHERE user_id = ? AND status = 'done' "
+        "ORDER BY completed_at DESC",
+        (user_id,),
+    ).fetchall()
+    return [_row_to_assignment(row) for row in rows]
+
+
+def list_all_completed_assignments(conn: sqlite3.Connection) -> list[Assignment]:
+    rows = conn.execute(
+        "SELECT * FROM assignments WHERE status = 'done' ORDER BY completed_at DESC"
+    ).fetchall()
+    return [_row_to_assignment(row) for row in rows]

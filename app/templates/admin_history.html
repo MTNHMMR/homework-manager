@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}History — Homework Manager{% endblock %}
+{% block content %}
+<h1>Completed work</h1>
+
+{% for kid, kid_completed in groups %}
+<h2>{{ kid.display_name }}</h2>
+<table>
+    <thead>
+        <tr><th>Subject</th><th>Title</th><th>Due</th><th>Completed</th><th></th></tr>
+    </thead>
+    <tbody>
+        {% for a in kid_completed %}
+        <tr>
+            <td>{{ a.subject }}</td>
+            <td>{% if a.priority %}<span class="priority-mark" title="Important">★</span> {% endif %}{{ a.title }}</td>
+            <td>{{ a.due_date }}</td>
+            <td>{{ a.completed_at }}</td>
+            <td><a href="/admin/{{ a.id }}/edit">Edit</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>Nothing finished yet.</p>
+{% endfor %}
+{% endblock %}

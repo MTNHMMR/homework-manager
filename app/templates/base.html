@@ -13,10 +13,12 @@
             <span class="who">{{ user.display_name }}</span>
             {% if user.is_admin %}
                 <a href="/admin">All assignments</a>
+                <a href="/admin/history">History</a>
                 <a href="/admin/users">Manage users</a>
                 <a href="/admin/classes">Manage classes</a>
             {% else %}
                 <a href="/overview">My assignments</a>
+                <a href="/overview/history">History</a>
             {% endif %}
             <a href="/settings">Settings</a>
             <form method="post" action="/logout" class="inline">
