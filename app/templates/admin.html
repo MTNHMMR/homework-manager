@@ -14,6 +14,36 @@
     </label>
 </form>
 
+<p class="view-toggle">
+    <a href="/admin?status={{ selected_status or '' }}&view=list" class="{% if view != 'week' %}active{% endif %}">List</a>
+    <a href="/admin?status={{ selected_status or '' }}&view=week" class="{% if view == 'week' %}active{% endif %}">This Week</a>
+</p>
+
+{% if view == 'week' %}
+<p class="week-nav">
+    <a href="/admin?status={{ selected_status or '' }}&view=week&week={{ prev_week }}">&laquo; Previous week</a>
+    <a href="/admin?status={{ selected_status or '' }}&view=week&week={{ next_week }}">Next week &raquo;</a>
+</p>
+{% for kid, day_groups in week_groups %}
+<h2>{{ kid.display_name }}{% if kid_streaks[kid.id] %} <span class="streak">🔥 {{ kid_streaks[kid.id] }}-day streak</span>{% endif %}</h2>
+<div class="week-grid">
+    {% for day, day_assignments in day_groups %}
+    <div class="week-day">
+        <h3>{{ day.strftime('%a %m/%d') }}</h3>
+        {% for a in day_assignments %}
+        <div class="week-item status-{{ a.status }}{% if a.due_date < today and a.status != 'done' %} overdue{% endif %}">
+            {% if a.priority %}<span class="priority-mark" title="Important">★</span> {% endif %}<strong>{{ a.subject }}</strong>: {{ a.title }}
+        </div>
+        {% else %}
+        <p class="empty">—</p>
+        {% endfor %}
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p>No assignments logged yet.</p>
+{% endfor %}
+{% else %}
 {% for kid, kid_assignments in groups %}
 <h2>{{ kid.display_name }}{% if kid_streaks[kid.id] %} <span class="streak">🔥 {{ kid_streaks[kid.id] }}-day streak</span>{% endif %}</h2>
 <table>
@@ -48,4 +78,5 @@
 {% else %}
 <p>No assignments logged yet.</p>
 {% endfor %}
+{% endif %}
 {% endblock %}

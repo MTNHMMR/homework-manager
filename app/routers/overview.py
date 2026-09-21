@@ -1,5 +1,5 @@
 import sqlite3
-from datetime import date
+from datetime import date, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
@@ -21,6 +21,7 @@ from app.assignments import (
 from app.classes import list_active_classes_for_user
 from app.deps import get_db, require_user
 from app.users import User
+from app.weeks import current_week_start, group_assignments_by_day, week_dates
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -34,12 +35,22 @@ def _visible_assignments(assignments: list[Assignment], today: str) -> list[Assi
 @router.get("/overview", response_class=HTMLResponse)
 def overview(
     request: Request,
+    view: str = "list",
+    week: Optional[str] = None,
     user: User = Depends(require_user),
     db: sqlite3.Connection = Depends(get_db),
 ):
     today = date.today().isoformat()
     assignments = sort_by_priority(_visible_assignments(list_assignments_for_user(db, user.id), today))
     active_classes = list_active_classes_for_user(db, user.id)
+    streak = compute_streak(db, user.id, today)
+
+    week_start_date = date.fromisoformat(week) if week else current_week_start(date.today())
+    dates = week_dates(week_start_date)
+    day_groups = group_assignments_by_day(assignments, dates)
+    prev_week = (week_start_date - timedelta(days=7)).isoformat()
+    next_week = (week_start_date + timedelta(days=7)).isoformat()
+
     return templates.TemplateResponse(
         "overview.html",
         {
@@ -49,7 +60,11 @@ def overview(
             "statuses": VALID_STATUSES,
             "active_classes": active_classes,
             "today": today,
-            "streak": compute_streak(db, user.id, today),
+            "streak": streak,
+            "view": view,
+            "day_groups": day_groups,
+            "prev_week": prev_week,
+            "next_week": next_week,
         },
     )
 

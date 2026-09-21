@@ -455,3 +455,28 @@ def test_admin_dashboard_hides_streak_badge_when_zero(client, db):
     resp = client.get("/admin")
     assert "Kid One" in resp.text
     assert "day streak" not in resp.text
+
+
+def test_admin_dashboard_list_view_is_default_and_unchanged(client, db):
+    kid1 = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    create_assignment(db, kid1.id, "Math", "Worksheet", "2026-09-25")
+    _login(client, "parent1")
+    resp = client.get("/admin")
+    assert "<table>" in resp.text
+    assert "week-grid" not in resp.text
+
+
+def test_admin_dashboard_week_view_shows_assignment_under_correct_day(client, db):
+    from datetime import date, timedelta
+
+    kid1 = create_user(db, "kid1", "pw", "Kid One")
+    create_user(db, "parent1", "pw", "Parent One", is_admin=True)
+    week_start = date.today() - timedelta(days=(date.today().weekday() + 1) % 7)
+    wednesday = (week_start + timedelta(days=3)).isoformat()
+    create_assignment(db, kid1.id, "Math", "Wednesday HW", wednesday)
+    _login(client, "parent1")
+    resp = client.get("/admin?view=week")
+    assert resp.status_code == 200
+    assert "week-grid" in resp.text
+    assert "Wednesday HW" in resp.text

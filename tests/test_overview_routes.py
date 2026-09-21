@@ -441,3 +441,42 @@ def test_overview_hides_streak_when_zero(client, db):
     _login(client, "kid1")
     resp = client.get("/overview")
     assert "day streak" not in resp.text
+
+
+def test_overview_list_view_is_default_and_unchanged(client, db):
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    create_assignment(db, kid.id, "Math", "Worksheet", "2026-09-25")
+    _login(client, "kid1")
+    resp = client.get("/overview")
+    assert resp.status_code == 200
+    assert "<table>" in resp.text
+    assert "week-grid" not in resp.text
+
+
+def test_overview_week_view_shows_assignment_under_correct_day(client, db):
+    from datetime import date, timedelta
+
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    week_start = date.today() - timedelta(days=(date.today().weekday() + 1) % 7)
+    wednesday = (week_start + timedelta(days=3)).isoformat()
+    create_assignment(db, kid.id, "Math", "Wednesday HW", wednesday)
+    _login(client, "kid1")
+    resp = client.get("/overview?view=week")
+    assert resp.status_code == 200
+    assert "week-grid" in resp.text
+    assert "Wednesday HW" in resp.text
+
+
+def test_overview_week_navigation_moves_the_window(client, db):
+    from datetime import date, timedelta
+
+    kid = create_user(db, "kid1", "pw", "Kid One")
+    week_start = date.today() - timedelta(days=(date.today().weekday() + 1) % 7)
+    next_week_start = week_start + timedelta(days=7)
+    next_week_wednesday = (next_week_start + timedelta(days=3)).isoformat()
+    create_assignment(db, kid.id, "Math", "Next Week HW", next_week_wednesday)
+    _login(client, "kid1")
+    resp = client.get("/overview?view=week")
+    assert "Next Week HW" not in resp.text
+    resp2 = client.get(f"/overview?view=week&week={next_week_start.isoformat()}")
+    assert "Next Week HW" in resp2.text

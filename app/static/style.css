@@ -92,3 +92,12 @@ legend { padding: 0 0.4rem; font-weight: bold; }
 .accent-purple { background: #7b4fd6; }
 .accent-pink { background: #d6469b; }
 .streak { color: var(--accent); font-weight: bold; }
+.view-toggle a { margin-right: 0.75rem; }
+.view-toggle a.active { font-weight: bold; text-decoration: underline; }
+.week-nav a { margin-right: 1rem; }
+.week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; margin-top: 1rem; }
+.week-day { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.5rem; min-height: 4rem; }
+.week-day h3 { margin: 0 0 0.4rem; font-size: 0.85rem; }
+.week-item { font-size: 0.85rem; padding: 0.2rem 0; }
+.week-item.overdue { color: var(--error); }
+.week-day .empty { color: var(--border); margin: 0; }

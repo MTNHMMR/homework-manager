@@ -1,5 +1,5 @@
 import sqlite3
-from datetime import date
+from datetime import date, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
@@ -19,6 +19,7 @@ from app.assignments import (
 from app.classes import list_active_classes_for_user
 from app.deps import get_db, require_admin
 from app.users import User, list_users
+from app.weeks import current_week_start, group_assignments_by_day, week_dates
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -28,6 +29,8 @@ templates = Jinja2Templates(directory="app/templates")
 def admin_dashboard(
     request: Request,
     status: Optional[str] = None,
+    view: str = "list",
+    week: Optional[str] = None,
     admin: User = Depends(require_admin),
     db: sqlite3.Connection = Depends(get_db),
 ):
@@ -60,16 +63,29 @@ def admin_dashboard(
         or (status_filter is None and kid_streaks[user.id] > 0)
     ]
 
+    week_start_date = date.fromisoformat(week) if week else current_week_start(date.today())
+    dates = week_dates(week_start_date)
+    week_groups = [
+        (user, group_assignments_by_day(kid_assignments, dates))
+        for user, kid_assignments in groups
+    ]
+    prev_week = (week_start_date - timedelta(days=7)).isoformat()
+    next_week = (week_start_date + timedelta(days=7)).isoformat()
+
     return templates.TemplateResponse(
         "admin.html",
         {
             "request": request,
             "user": admin,
             "groups": groups,
+            "week_groups": week_groups,
             "kid_streaks": kid_streaks,
             "statuses": VALID_STATUSES,
             "selected_status": status_filter,
             "today": today,
+            "view": view,
+            "prev_week": prev_week,
+            "next_week": next_week,
         },
     )
 
