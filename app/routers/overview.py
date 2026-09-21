@@ -123,7 +123,13 @@ def set_status(
     if status not in VALID_STATUSES:
         raise HTTPException(status_code=400, detail="Invalid status")
     update_assignment(
-        db, assignment.id, assignment.subject, assignment.title, assignment.due_date, status
+        db,
+        assignment.id,
+        assignment.subject,
+        assignment.title,
+        assignment.due_date,
+        status,
+        assignment.priority,
     )
     return RedirectResponse("/overview", status_code=303)
 
@@ -195,7 +201,7 @@ def edit_assignment(
             },
             status_code=400,
         )
-    update_assignment(db, assignment.id, subject, title, due_date, assignment.status)
+    update_assignment(db, assignment.id, subject, title, due_date, assignment.status, assignment.priority)
     return RedirectResponse("/overview", status_code=303)
 
 

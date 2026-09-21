@@ -13,6 +13,8 @@ class Assignment:
     title: str
     due_date: str
     status: str
+    priority: bool
+    completed_at: Optional[str]
 
 
 def _row_to_assignment(row: sqlite3.Row) -> Assignment:
@@ -23,7 +25,13 @@ def _row_to_assignment(row: sqlite3.Row) -> Assignment:
         title=row["title"],
         due_date=row["due_date"],
         status=row["status"],
+        priority=bool(row["priority"]),
+        completed_at=row["completed_at"],
     )
+
+
+def _now(conn: sqlite3.Connection) -> str:
+    return conn.execute("SELECT datetime('now')").fetchone()[0]
 
 
 def create_assignment(
@@ -33,13 +41,15 @@ def create_assignment(
     title: str,
     due_date: str,
     status: str = "not_started",
+    priority: bool = False,
 ) -> Assignment:
     if status not in VALID_STATUSES:
         raise ValueError(f"invalid status: {status}")
+    completed_at = _now(conn) if status == "done" else None
     cur = conn.execute(
-        "INSERT INTO assignments (user_id, subject, title, due_date, status) "
-        "VALUES (?, ?, ?, ?, ?)",
-        (user_id, subject, title, due_date, status),
+        "INSERT INTO assignments (user_id, subject, title, due_date, status, priority, completed_at) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (user_id, subject, title, due_date, status, int(priority), completed_at),
     )
     conn.commit()
     return get_assignment_by_id(conn, cur.lastrowid)
@@ -69,12 +79,21 @@ def update_assignment(
     title: str,
     due_date: str,
     status: str,
+    priority: bool,
 ) -> None:
     if status not in VALID_STATUSES:
         raise ValueError(f"invalid status: {status}")
+    current = get_assignment_by_id(conn, assignment_id)
+    if status == "done" and current.status != "done":
+        completed_at = _now(conn)
+    elif status != "done":
+        completed_at = None
+    else:
+        completed_at = current.completed_at
     conn.execute(
-        "UPDATE assignments SET subject = ?, title = ?, due_date = ?, status = ? WHERE id = ?",
-        (subject, title, due_date, status, assignment_id),
+        "UPDATE assignments SET subject = ?, title = ?, due_date = ?, status = ?, "
+        "priority = ?, completed_at = ? WHERE id = ?",
+        (subject, title, due_date, status, int(priority), completed_at, assignment_id),
     )
     conn.commit()
 

@@ -74,7 +74,13 @@ def admin_set_status(
     if status not in VALID_STATUSES:
         raise HTTPException(status_code=400, detail="Invalid status")
     update_assignment(
-        db, assignment.id, assignment.subject, assignment.title, assignment.due_date, status
+        db,
+        assignment.id,
+        assignment.subject,
+        assignment.title,
+        assignment.due_date,
+        status,
+        assignment.priority,
     )
     return RedirectResponse("/admin", status_code=303)
 
@@ -159,7 +165,7 @@ def admin_edit(
         )
     if status not in VALID_STATUSES:
         raise HTTPException(status_code=400, detail="Invalid status")
-    update_assignment(db, assignment.id, subject, title, due_date, status)
+    update_assignment(db, assignment.id, subject, title, due_date, status, assignment.priority)
     return RedirectResponse("/admin", status_code=303)
 
 
