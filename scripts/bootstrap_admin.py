@@ -15,16 +15,15 @@ def bootstrap_admin() -> None:
         print("ADMIN_USERNAME and ADMIN_PASSWORD not set; skipping admin bootstrap.")
         return
 
-    password_error = password_validation_error(password)
-    if password_error:
-        raise RuntimeError(f"ADMIN_PASSWORD is too weak: {password_error}")
-
     conn = get_connection(db_path)
     init_db(conn)
     try:
         if get_user_by_username(conn, username) is not None:
             print(f"Admin user '{username}' already exists; skipping.")
             return
+        password_error = password_validation_error(password)
+        if password_error:
+            raise RuntimeError(f"ADMIN_PASSWORD is too weak: {password_error}")
         create_user(conn, username, password, display_name, is_admin=True)
         print(f"Created admin user '{username}'.")
     finally:
