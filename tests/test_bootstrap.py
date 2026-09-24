@@ -62,3 +62,15 @@ def test_bootstrap_runs_as_a_module_without_import_errors(tmp_path, monkeypatch)
     )
     assert result.returncode == 0, result.stderr
     assert "ModuleNotFoundError" not in result.stderr
+
+
+
+def test_bootstrap_rejects_weak_admin_password(db_path, monkeypatch):
+    import pytest
+
+    monkeypatch.setenv("HOMEWORK_DB_PATH", str(db_path))
+    monkeypatch.setenv("ADMIN_USERNAME", "parent1")
+    monkeypatch.setenv("ADMIN_PASSWORD", "short")
+
+    with pytest.raises(RuntimeError, match="too weak"):
+        bootstrap_admin()
