@@ -33,6 +33,8 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                     break
 
         return await call_next(request)
+
+
 from app.routers import admin, admin_classes, admin_users, auth, overview, settings
 
 
