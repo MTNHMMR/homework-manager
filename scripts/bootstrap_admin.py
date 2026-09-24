@@ -1,6 +1,7 @@
 import os
 
 from app.database import get_connection, init_db
+from app.security import password_validation_error
 from app.users import create_user, get_user_by_username
 
 
@@ -13,6 +14,10 @@ def bootstrap_admin() -> None:
     if not username or not password:
         print("ADMIN_USERNAME and ADMIN_PASSWORD not set; skipping admin bootstrap.")
         return
+
+    password_error = password_validation_error(password)
+    if password_error:
+        raise RuntimeError(f"ADMIN_PASSWORD is too weak: {password_error}")
 
     conn = get_connection(db_path)
     init_db(conn)
