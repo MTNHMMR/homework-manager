@@ -138,7 +138,10 @@ def add_assignment(
             },
             status_code=400,
         )
-    create_assignment(db, user.id, subject, title, due_date, priority=bool(priority))
+    try:
+        create_assignment(db, user.id, subject, title, due_date, priority=bool(priority))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     return RedirectResponse("/overview", status_code=303)
 
 
@@ -244,7 +247,12 @@ def edit_assignment(
             },
             status_code=400,
         )
-    update_assignment(db, assignment.id, subject, title, due_date, assignment.status, bool(priority))
+    try:
+        update_assignment(
+            db, assignment.id, subject, title, due_date, assignment.status, bool(priority)
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     return RedirectResponse("/overview", status_code=303)
 
 
