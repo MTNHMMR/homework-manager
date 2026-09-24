@@ -74,3 +74,19 @@ def test_bootstrap_rejects_weak_admin_password(db_path, monkeypatch):
 
     with pytest.raises(RuntimeError, match="too weak"):
         bootstrap_admin()
+
+
+
+def test_bootstrap_allows_existing_admin_with_legacy_short_env_password(
+    db_path, db, monkeypatch
+):
+    from app.users import create_user
+
+    create_user(db, "parent1", "legacy", "Parent One", is_admin=True)
+    monkeypatch.setenv("HOMEWORK_DB_PATH", str(db_path))
+    monkeypatch.setenv("ADMIN_USERNAME", "parent1")
+    monkeypatch.setenv("ADMIN_PASSWORD", "short")
+
+    bootstrap_admin()
+
+    assert get_user_by_username(db, "parent1") is not None
