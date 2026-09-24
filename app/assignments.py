@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 from typing import Optional
 
+from app.validation import normalize_iso_date
+
 VALID_STATUSES = ("not_started", "in_progress", "done")
 
 
@@ -46,6 +48,7 @@ def create_assignment(
 ) -> Assignment:
     if status not in VALID_STATUSES:
         raise ValueError(f"invalid status: {status}")
+    due_date = normalize_iso_date(due_date, "Due date")
     completed_at = _now(conn) if status == "done" else None
     cur = conn.execute(
         "INSERT INTO assignments (user_id, subject, title, due_date, status, priority, completed_at) "
@@ -84,6 +87,7 @@ def update_assignment(
 ) -> None:
     if status not in VALID_STATUSES:
         raise ValueError(f"invalid status: {status}")
+    due_date = normalize_iso_date(due_date, "Due date")
     current = get_assignment_by_id(conn, assignment_id)
     if status == "done" and current.status != "done":
         completed_at = _now(conn)
