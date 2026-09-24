@@ -74,7 +74,9 @@ def add_class(
     if target is None:
         raise HTTPException(status_code=404, detail="Not found")
     if target.is_admin:
-        raise HTTPException(status_code=400, detail="Classes can only be assigned to kid accounts")
+        raise HTTPException(
+            status_code=400, detail="Classes can only be assigned to kid accounts"
+        )
     name = _require_name(name)
     try:
         create_class(
