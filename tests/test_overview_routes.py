@@ -570,3 +570,27 @@ def test_overview_history_still_shows_real_completed_at(client, db):
     _login(client, "kid1")
     resp = client.get("/overview/history")
     assert "Completed before this app tracked completion dates" not in resp.text
+
+
+
+def test_add_assignment_rejects_malformed_due_date(client, db):
+    kid = create_user(db, "date-kid", "pw", "Date Kid")
+    _login(client, "date-kid")
+    resp = client.post(
+        "/overview/add",
+        data={"subject": "Math", "title": "Impossible Date", "due_date": "2026-99-40"},
+    )
+    assert resp.status_code == 400
+    assert list_assignments_for_user(db, kid.id) == []
+
+
+def test_edit_assignment_rejects_malformed_due_date(client, db):
+    kid = create_user(db, "edit-date-kid", "pw", "Edit Date Kid")
+    assignment = create_assignment(db, kid.id, "Math", "Worksheet", "2026-09-25")
+    _login(client, "edit-date-kid")
+    resp = client.post(
+        f"/overview/{assignment.id}/edit",
+        data={"subject": "Math", "title": "Worksheet", "due_date": "not-a-date"},
+    )
+    assert resp.status_code == 400
+    assert get_assignment_by_id(db, assignment.id).due_date == "2026-09-25"
