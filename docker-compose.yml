@@ -7,6 +7,7 @@ services:
       - homework-data:/data
     environment:
       SESSION_SECRET_KEY: ${SESSION_SECRET_KEY}
+      SESSION_HTTPS_ONLY: ${SESSION_HTTPS_ONLY:-0}
       ADMIN_USERNAME: ${ADMIN_USERNAME}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       ADMIN_DISPLAY_NAME: ${ADMIN_DISPLAY_NAME:-Admin}

@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Optional
 
+from app.validation import normalize_optional_iso_date
+
 
 @dataclass
 class Class:
@@ -33,6 +35,7 @@ def create_class(
     period: Optional[int] = None,
     expires_on: Optional[str] = None,
 ) -> Class:
+    expires_on = normalize_optional_iso_date(expires_on, "Expiration date")
     cur = conn.execute(
         "INSERT INTO classes (user_id, name, teacher, period, expires_on) "
         "VALUES (?, ?, ?, ?, ?)",
@@ -76,6 +79,7 @@ def update_class(
     period: Optional[int],
     expires_on: Optional[str],
 ) -> None:
+    expires_on = normalize_optional_iso_date(expires_on, "Expiration date")
     conn.execute(
         "UPDATE classes SET name = ?, teacher = ?, period = ?, expires_on = ? WHERE id = ?",
         (name, teacher, period, expires_on, class_id),

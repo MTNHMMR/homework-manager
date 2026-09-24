@@ -151,3 +151,27 @@ def test_add_class_404_for_nonexistent_user(client, db):
     _login(client, "parent1")
     resp = client.post("/admin/classes/add", data={"user_id": "999", "name": "Math"})
     assert resp.status_code == 404
+
+
+
+def test_add_class_rejects_admin_target(client, db):
+    admin = create_user(db, "parent-target", "pw", "Parent Target", is_admin=True)
+    create_user(db, "parent-login", "pw", "Parent Login", is_admin=True)
+    _login(client, "parent-login")
+    resp = client.post(
+        "/admin/classes/add", data={"user_id": str(admin.id), "name": "Math"}
+    )
+    assert resp.status_code == 400
+    assert list_classes_for_user(db, admin.id) == []
+
+
+def test_add_class_rejects_malformed_expiration_date(client, db):
+    kid = create_user(db, "class-date-kid", "pw", "Class Date Kid")
+    create_user(db, "class-date-admin", "pw", "Class Date Admin", is_admin=True)
+    _login(client, "class-date-admin")
+    resp = client.post(
+        "/admin/classes/add",
+        data={"user_id": str(kid.id), "name": "Math", "expires_on": "2026-02-31"},
+    )
+    assert resp.status_code == 400
+    assert list_classes_for_user(db, kid.id) == []

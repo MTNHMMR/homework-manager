@@ -5,7 +5,7 @@ from scripts.bootstrap_admin import bootstrap_admin
 def test_bootstrap_creates_admin_when_none_exists(db_path, db, monkeypatch):
     monkeypatch.setenv("HOMEWORK_DB_PATH", str(db_path))
     monkeypatch.setenv("ADMIN_USERNAME", "parent1")
-    monkeypatch.setenv("ADMIN_PASSWORD", "hunter2")
+    monkeypatch.setenv("ADMIN_PASSWORD", "hunter22")
     monkeypatch.setenv("ADMIN_DISPLAY_NAME", "Parent One")
 
     bootstrap_admin()
@@ -19,7 +19,7 @@ def test_bootstrap_creates_admin_when_none_exists(db_path, db, monkeypatch):
 def test_bootstrap_is_idempotent(db_path, db, monkeypatch):
     monkeypatch.setenv("HOMEWORK_DB_PATH", str(db_path))
     monkeypatch.setenv("ADMIN_USERNAME", "parent1")
-    monkeypatch.setenv("ADMIN_PASSWORD", "hunter2")
+    monkeypatch.setenv("ADMIN_PASSWORD", "hunter22")
     monkeypatch.setenv("ADMIN_DISPLAY_NAME", "Parent One")
 
     bootstrap_admin()
@@ -62,3 +62,31 @@ def test_bootstrap_runs_as_a_module_without_import_errors(tmp_path, monkeypatch)
     )
     assert result.returncode == 0, result.stderr
     assert "ModuleNotFoundError" not in result.stderr
+
+
+
+def test_bootstrap_rejects_weak_admin_password(db_path, monkeypatch):
+    import pytest
+
+    monkeypatch.setenv("HOMEWORK_DB_PATH", str(db_path))
+    monkeypatch.setenv("ADMIN_USERNAME", "parent1")
+    monkeypatch.setenv("ADMIN_PASSWORD", "short")
+
+    with pytest.raises(RuntimeError, match="too weak"):
+        bootstrap_admin()
+
+
+
+def test_bootstrap_allows_existing_admin_with_legacy_short_env_password(
+    db_path, db, monkeypatch
+):
+    from app.users import create_user
+
+    create_user(db, "parent1", "legacy", "Parent One", is_admin=True)
+    monkeypatch.setenv("HOMEWORK_DB_PATH", str(db_path))
+    monkeypatch.setenv("ADMIN_USERNAME", "parent1")
+    monkeypatch.setenv("ADMIN_PASSWORD", "short")
+
+    bootstrap_admin()
+
+    assert get_user_by_username(db, "parent1") is not None

@@ -1,6 +1,7 @@
 import os
 
 from app.database import get_connection, init_db
+from app.security import password_validation_error
 from app.users import create_user, get_user_by_username
 
 
@@ -20,6 +21,9 @@ def bootstrap_admin() -> None:
         if get_user_by_username(conn, username) is not None:
             print(f"Admin user '{username}' already exists; skipping.")
             return
+        password_error = password_validation_error(password)
+        if password_error:
+            raise RuntimeError(f"ADMIN_PASSWORD is too weak: {password_error}")
         create_user(conn, username, password, display_name, is_admin=True)
         print(f"Created admin user '{username}'.")
     finally:

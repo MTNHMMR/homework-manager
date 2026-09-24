@@ -70,17 +70,25 @@ def add_class(
     admin: User = Depends(require_admin),
     db: sqlite3.Connection = Depends(get_db),
 ):
-    if get_user_by_id(db, user_id) is None:
+    target = get_user_by_id(db, user_id)
+    if target is None:
         raise HTTPException(status_code=404, detail="Not found")
+    if target.is_admin:
+        raise HTTPException(
+            status_code=400, detail="Classes can only be assigned to kid accounts"
+        )
     name = _require_name(name)
-    create_class(
-        db,
-        user_id,
-        name,
-        teacher=_clean_optional(teacher),
-        period=_parse_period(period),
-        expires_on=_clean_optional(expires_on),
-    )
+    try:
+        create_class(
+            db,
+            user_id,
+            name,
+            teacher=_clean_optional(teacher),
+            period=_parse_period(period),
+            expires_on=_clean_optional(expires_on),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     return RedirectResponse("/admin/classes", status_code=303)
 
 
@@ -112,14 +120,17 @@ def edit_class(
     if get_class_by_id(db, class_id) is None:
         raise HTTPException(status_code=404, detail="Not found")
     name = _require_name(name)
-    update_class(
-        db,
-        class_id,
-        name,
-        _clean_optional(teacher),
-        _parse_period(period),
-        _clean_optional(expires_on),
-    )
+    try:
+        update_class(
+            db,
+            class_id,
+            name,
+            _clean_optional(teacher),
+            _parse_period(period),
+            _clean_optional(expires_on),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     return RedirectResponse("/admin/classes", status_code=303)
 
 
