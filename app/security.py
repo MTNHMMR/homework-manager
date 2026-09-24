@@ -1,3 +1,7 @@
+from collections import defaultdict, deque
+from threading import Lock
+from time import monotonic
+
 import bcrypt
 
 
@@ -12,10 +16,6 @@ def verify_password(password: str, password_hash: str) -> bool:
 MIN_PASSWORD_LENGTH = 8
 LOGIN_MAX_FAILURES = 5
 LOGIN_WINDOW_SECONDS = 300
-
-from collections import defaultdict, deque
-from threading import Lock
-from time import monotonic
 
 _login_failures = defaultdict(deque)
 _login_lock = Lock()
