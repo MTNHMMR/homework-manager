@@ -133,12 +133,19 @@ def compute_streak(conn: sqlite3.Connection, user_id: int, today: str) -> int:
     """On-time streak: consecutive days walking backward from yesterday where every
     assignment due that day was completed by end of that day. A day with nothing due
     is skipped, not counted as a break."""
-    earliest_row = conn.execute(
-        "SELECT MIN(due_date) AS earliest FROM assignments WHERE user_id = ?", (user_id,)
-    ).fetchone()
-    if earliest_row["earliest"] is None:
+    due_rows = conn.execute(
+        "SELECT DISTINCT due_date FROM assignments WHERE user_id = ?", (user_id,)
+    ).fetchall()
+    valid_due_dates = []
+    for row in due_rows:
+        try:
+            valid_due_dates.append(date.fromisoformat(row["due_date"]))
+        except (TypeError, ValueError):
+            # Legacy/corrupt rows should not make the dashboard unusable.
+            continue
+    if not valid_due_dates:
         return 0
-    earliest = date.fromisoformat(earliest_row["earliest"])
+    earliest = min(valid_due_dates)
     day = date.fromisoformat(today) - timedelta(days=1)
 
     streak = 0
