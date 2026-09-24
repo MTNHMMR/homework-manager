@@ -52,3 +52,28 @@ def test_logout_clears_session(client, db):
     protected = client.get("/overview")
     assert protected.status_code == 303
     assert protected.headers["location"] == "/login"
+
+
+
+def test_login_rate_limits_repeated_failures(client, db):
+    create_user(db, "throttle-kid", "correct-password", "Throttle Kid")
+    for _ in range(5):
+        resp = client.post(
+            "/login", data={"username": "throttle-kid", "password": "wrong-password"}
+        )
+        assert resp.status_code == 401
+
+    blocked = client.post(
+        "/login", data={"username": "throttle-kid", "password": "correct-password"}
+    )
+    assert blocked.status_code == 429
+    assert int(blocked.headers["Retry-After"]) > 0
+
+
+def test_cross_site_post_is_rejected(client):
+    resp = client.post(
+        "/login",
+        data={"username": "nobody", "password": "wrong"},
+        headers={"Origin": "https://evil.example"},
+    )
+    assert resp.status_code == 403
