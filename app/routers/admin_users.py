@@ -6,6 +6,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from app.deps import get_db, require_admin
+from app.security import password_validation_error
 from app.users import (
     User,
     create_user,
@@ -40,6 +41,9 @@ def add_user(
     admin: User = Depends(require_admin),
     db: sqlite3.Connection = Depends(get_db),
 ):
+    password_error = password_validation_error(password)
+    if password_error:
+        raise HTTPException(status_code=400, detail=password_error)
     if get_user_by_username(db, username) is not None:
         raise HTTPException(status_code=400, detail="Username already exists")
     create_user(db, username, password, display_name, is_admin=is_admin is not None)
@@ -55,6 +59,9 @@ def reset_password(
 ):
     if get_user_by_id(db, user_id) is None:
         raise HTTPException(status_code=404, detail="Not found")
+    password_error = password_validation_error(new_password)
+    if password_error:
+        raise HTTPException(status_code=400, detail=password_error)
     set_user_password(db, user_id, new_password)
     return RedirectResponse("/admin/users", status_code=303)
 
