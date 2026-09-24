@@ -78,12 +78,12 @@ def add_class(
     name = _require_name(name)
     try:
         create_class(
-        db,
-        user_id,
-        name,
-        teacher=_clean_optional(teacher),
-        period=_parse_period(period),
-        expires_on=_clean_optional(expires_on),
+            db,
+            user_id,
+            name,
+            teacher=_clean_optional(teacher),
+            period=_parse_period(period),
+            expires_on=_clean_optional(expires_on),
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
