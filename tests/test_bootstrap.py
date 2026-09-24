@@ -5,7 +5,7 @@ from scripts.bootstrap_admin import bootstrap_admin
 def test_bootstrap_creates_admin_when_none_exists(db_path, db, monkeypatch):
     monkeypatch.setenv("HOMEWORK_DB_PATH", str(db_path))
     monkeypatch.setenv("ADMIN_USERNAME", "parent1")
-    monkeypatch.setenv("ADMIN_PASSWORD", "hunter2")
+    monkeypatch.setenv("ADMIN_PASSWORD", "hunter22")
     monkeypatch.setenv("ADMIN_DISPLAY_NAME", "Parent One")
 
     bootstrap_admin()
@@ -19,7 +19,7 @@ def test_bootstrap_creates_admin_when_none_exists(db_path, db, monkeypatch):
 def test_bootstrap_is_idempotent(db_path, db, monkeypatch):
     monkeypatch.setenv("HOMEWORK_DB_PATH", str(db_path))
     monkeypatch.setenv("ADMIN_USERNAME", "parent1")
-    monkeypatch.setenv("ADMIN_PASSWORD", "hunter2")
+    monkeypatch.setenv("ADMIN_PASSWORD", "hunter22")
     monkeypatch.setenv("ADMIN_DISPLAY_NAME", "Parent One")
 
     bootstrap_admin()
