@@ -116,7 +116,9 @@ body.login-page {
     --cf-danger: #ff7a7a;
     --cf-display: "Fraunces", Georgia, "Times New Roman", serif;
     --cf-sans: "Figtree", "Segoe UI", system-ui, sans-serif;
-    background: var(--cf-bg);
+    --cf-navy-deep: #101921;
+    /* navy-deep frames the card in both themes */
+    background: var(--cf-navy-deep);
     color: var(--cf-ink);
     font-family: var(--cf-sans);
     font-size: 16px;
@@ -154,8 +156,9 @@ body.login-page main {
     border-radius: 16px;
     padding: 24px;
     box-sizing: border-box;
+    text-align: center;
 }
-.login-mark { display: block; width: 56px; height: 56px; margin-bottom: 16px; }
+.login-mark { display: block; width: 56px; height: 56px; margin: 0 auto 16px; }
 .login-eyebrow {
     margin: 0 0 4px;
     font-size: 12px;
