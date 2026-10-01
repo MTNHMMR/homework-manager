@@ -3,7 +3,6 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 
 from app.classes import (
     create_class,
@@ -14,9 +13,9 @@ from app.classes import (
 )
 from app.deps import get_db, require_admin
 from app.users import User, get_user_by_id, list_users
+from app.templating import templates
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
 
 
 def _parse_period(period: Optional[str]) -> Optional[int]:

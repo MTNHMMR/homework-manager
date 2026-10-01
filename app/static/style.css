@@ -216,3 +216,6 @@ body.login-page main .login-card button[type="submit"] {
 @media (min-width: 600px) {
     .login-card { padding: 32px; }
 }
+
+.app-version { text-align: center; font-size: 0.75rem; color: var(--status-idle); padding: 0 1rem 1rem; }
+body.login-page .app-version { position: fixed; left: 0; right: 0; bottom: 0; padding-bottom: 12px; color: #9aa7b3; }

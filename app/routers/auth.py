@@ -4,14 +4,13 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 
 from app.deps import get_current_user, get_db
 from app.security import verify_password
 from app.users import User, get_user_by_username
+from app.templating import templates
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("/", response_class=RedirectResponse)

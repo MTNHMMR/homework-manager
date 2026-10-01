@@ -3,7 +3,6 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 
 from app.deps import get_db, require_admin
 from app.users import (
@@ -15,9 +14,9 @@ from app.users import (
     set_user_active,
     set_user_password,
 )
+from app.templating import templates
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("/admin/users", response_class=HTMLResponse)

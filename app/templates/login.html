@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Log in — Homework Manager{% endblock %}
 {% block head %}
-<link rel="icon" href="/static/cain-mark.svg" type="image/svg+xml">
+<link rel="icon" href="/static/cain-mark.svg?v={{ app_version }}" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
 {% block nav %}{% endblock %}
 {% block content %}
 <div class="login-card">
-    <img class="login-mark" src="/static/cain-mark.svg" width="56" height="56" alt="Cain family logo">
+    <img class="login-mark" src="/static/cain-mark.svg?v={{ app_version }}" width="56" height="56" alt="Cain family logo">
     <p class="login-eyebrow">Homework Manager</p>
     <h1 id="greeting">Welcome back</h1>
     <p class="login-sub">Log in to see what's due.</p>

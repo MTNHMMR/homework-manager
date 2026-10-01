@@ -4,7 +4,6 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 
 from app.assignments import (
     VALID_STATUSES,
@@ -20,9 +19,9 @@ from app.classes import list_active_classes_for_user
 from app.deps import get_db, require_admin
 from app.users import User, list_users
 from app.weeks import group_assignments_by_day, parse_week_start, week_dates
+from app.templating import templates
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("/admin", response_class=HTMLResponse)
