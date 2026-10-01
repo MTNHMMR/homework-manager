@@ -87,3 +87,33 @@ def set_user_theme(
         (theme, accent_color, user_id),
     )
     conn.commit()
+
+
+def update_user(
+    conn: sqlite3.Connection,
+    user_id: int,
+    username: str,
+    display_name: str,
+    is_admin: bool,
+) -> None:
+    conn.execute(
+        "UPDATE users SET username = ?, display_name = ?, is_admin = ? WHERE id = ?",
+        (username, display_name, int(is_admin), user_id),
+    )
+    conn.commit()
+
+
+def delete_user(conn: sqlite3.Connection, user_id: int) -> None:
+    """Remove a user along with every assignment and class they own."""
+    conn.execute("DELETE FROM assignments WHERE user_id = ?", (user_id,))
+    conn.execute("DELETE FROM classes WHERE user_id = ?", (user_id,))
+    conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    conn.commit()
+
+
+def count_other_active_admins(conn: sqlite3.Connection, user_id: int) -> int:
+    row = conn.execute(
+        "SELECT COUNT(*) FROM users WHERE is_admin = 1 AND active = 1 AND id != ?",
+        (user_id,),
+    ).fetchone()
+    return row[0]

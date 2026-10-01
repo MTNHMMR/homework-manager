@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Wall Display — Homework Manager{% endblock %}
+{% block content %}
+<h1>Wall display access</h1>
+<p>A display token lets a device read upcoming assignments without logging in. It can only read; it can't change anything.</p>
+
+{% if new_token %}
+<div class="token-reveal">
+    <p><strong>Token for “{{ new_token_name }}”</strong> — copy it now. It won't be shown again.</p>
+    <input type="text" readonly value="{{ new_token }}" onclick="this.select()">
+</div>
+{% endif %}
+
+{% if tokens %}
+<table>
+    <thead>
+        <tr><th>Name</th><th>Created</th><th>Last used</th><th></th></tr>
+    </thead>
+    <tbody>
+        {% for t in tokens %}
+        <tr>
+            <td>{{ t.name }}</td>
+            <td>{{ t.created_at }}</td>
+            <td>{{ t.last_used_at or "Never" }}</td>
+            <td>
+                <form method="post" action="/admin/display/tokens/{{ t.id }}/revoke" class="inline"
+                      onsubmit="return confirm('Revoke this token? The device using it will stop updating.');">
+                    <button type="submit">Revoke</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No display tokens yet.</p>
+{% endif %}
+
+<h2>Create a token</h2>
+<form method="post" action="/admin/display/tokens" class="stack">
+    <label>Name <input type="text" name="name" placeholder="Kitchen wall display" required></label>
+    <button type="submit">Create token</button>
+</form>
+
+<h2>How the display uses it</h2>
+<p>Request <code>GET /api/display/assignments?days=7</code> with the header
+<code>Authorization: Bearer &lt;token&gt;</code>. It returns JSON with each kid's unfinished
+assignments that are overdue or due in the next <code>days</code> days (max 31).</p>
+{% endblock %}

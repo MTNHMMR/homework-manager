@@ -21,6 +21,9 @@
                 </form>
             </td>
             <td>
+                <form method="get" action="/admin/users/{{ u.id }}/edit" class="inline">
+                    <button type="submit">Edit</button>
+                </form>
                 {% if u.active %}
                 <form method="post" action="/admin/users/{{ u.id }}/deactivate" class="inline">
                     <button type="submit">Deactivate</button>
@@ -28,6 +31,12 @@
                 {% else %}
                 <form method="post" action="/admin/users/{{ u.id }}/activate" class="inline">
                     <button type="submit">Activate</button>
+                </form>
+                {% endif %}
+                {% if u.id != user.id %}
+                <form method="post" action="/admin/users/{{ u.id }}/delete" class="inline" data-name="{{ u.display_name }}"
+                      onsubmit="return confirm('Delete ' + this.dataset.name + '? This also deletes all of their assignments and classes. To just block logins, use Deactivate instead.');">
+                    <button type="submit">Delete</button>
                 </form>
                 {% endif %}
             </td>
@@ -41,7 +50,7 @@
     <label>Display name <input type="text" name="display_name" required></label>
     <label>Username <input type="text" name="username" required></label>
     <label>Password <input type="password" name="password" required minlength="6"></label>
-    <label><input type="checkbox" name="is_admin"> Admin</label>
+    <label class="checkbox"><input type="checkbox" name="is_admin"> Admin</label>
     <button type="submit">Add user</button>
 </form>
 {% endblock %}
