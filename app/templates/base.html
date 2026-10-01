@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Homework Manager{% endblock %}</title>
     <link rel="stylesheet" href="/static/style.css">
+    {% block head %}{% endblock %}
 </head>
-<body data-theme="{{ user.theme if user else 'light' }}" data-accent="{{ user.accent_color if user else 'blue' }}">
+<body {% block body_attrs %}data-theme="{{ user.theme if user else 'light' }}" data-accent="{{ user.accent_color if user else 'blue' }}"{% endblock %}>
+    {% block nav %}
     <nav>
         <a class="brand" href="/">Homework Manager</a>
         {% if user %}
@@ -26,6 +28,7 @@
             </form>
         {% endif %}
     </nav>
+    {% endblock %}
     <main>
         {% block content %}{% endblock %}
     </main>

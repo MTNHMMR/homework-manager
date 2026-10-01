@@ -101,3 +101,115 @@ legend { padding: 0 0.4rem; font-weight: bold; }
 .week-item { font-size: 0.85rem; padding: 0.2rem 0; }
 .week-item.overdue { color: var(--error); }
 .week-day .empty { color: var(--border); margin: 0; }
+
+/* Login page — Cain Family design system (caindomain.com). Dark first, Light follows the OS. */
+body.login-page {
+    --cf-bg: #0e161f;
+    --cf-surface: #151f2a;
+    --cf-surface-raised: #1c2835;
+    --cf-border: #2a3846;
+    --cf-ink: #f7f6f1;
+    --cf-ink-muted: #9aa7b3;
+    --cf-teal: #38c5b9;
+    --cf-teal-soft: #12332f;
+    --cf-on-teal: #04201e;
+    --cf-danger: #ff7a7a;
+    --cf-display: "Fraunces", Georgia, "Times New Roman", serif;
+    --cf-sans: "Figtree", "Segoe UI", system-ui, sans-serif;
+    background: var(--cf-bg);
+    color: var(--cf-ink);
+    font-family: var(--cf-sans);
+    font-size: 16px;
+    line-height: 24px;
+}
+@media (prefers-color-scheme: light) {
+    body.login-page {
+        --cf-bg: #f7f6f1;
+        --cf-surface: #ffffff;
+        --cf-surface-raised: #ecebe4;
+        --cf-border: #d6d8d3;
+        --cf-ink: #101921;
+        --cf-ink-muted: #4f5b66;
+        --cf-teal: #0e7c74;
+        --cf-teal-soft: #d7efeb;
+        --cf-on-teal: #ffffff;
+        --cf-danger: #b42318;
+    }
+}
+body.login-page main {
+    min-height: 100vh;
+    max-width: none;
+    margin: 0;
+    padding: 48px 16px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.login-card {
+    width: 100%;
+    max-width: 380px;
+    background: var(--cf-surface);
+    border: 1px solid var(--cf-border);
+    border-radius: 16px;
+    padding: 24px;
+    box-sizing: border-box;
+}
+.login-mark { display: block; width: 56px; height: 56px; margin-bottom: 16px; }
+.login-eyebrow {
+    margin: 0 0 4px;
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--cf-teal);
+}
+.login-card h1 {
+    margin: 0;
+    font-family: var(--cf-display);
+    font-size: 32px;
+    line-height: 38px;
+    font-weight: 600;
+}
+.login-sub { margin: 4px 0 24px; font-size: 14px; line-height: 20px; color: var(--cf-ink-muted); }
+.login-card .error {
+    margin: 0 0 16px;
+    padding: 8px 12px;
+    border: 1px solid var(--cf-danger);
+    border-radius: 10px;
+    color: var(--cf-danger);
+    font-size: 14px;
+    line-height: 20px;
+}
+.login-card form { display: flex; flex-direction: column; gap: 16px; }
+.login-card label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; line-height: 20px; font-weight: 600; }
+.login-card input {
+    font: inherit;
+    font-weight: 400;
+    font-size: 16px;
+    padding: 8px 12px;
+    background: var(--cf-surface-raised);
+    color: var(--cf-ink);
+    border: 1px solid var(--cf-ink-muted);
+    border-radius: 6px;
+}
+.login-card input:focus-visible,
+.login-card button:focus-visible {
+    outline: 2px solid var(--cf-teal);
+    outline-offset: 2px;
+}
+body.login-page main .login-card button[type="submit"] {
+    margin-top: 8px;
+    padding: 12px 16px;
+    background: var(--cf-teal);
+    color: var(--cf-on-teal);
+    border: none;
+    border-radius: 10px;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+@media (min-width: 600px) {
+    .login-card { padding: 32px; }
+}
